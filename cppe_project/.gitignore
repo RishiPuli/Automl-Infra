@@ -1,0 +1,44 @@
+# ── Byte-compiled / optimized / DLL files ──────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ── Virtual environment ─────────────────────────────────────────────────────
+venv/
+.env
+.venv/
+env/
+
+# ── Distribution / packaging ─────────────────────────────────────────────────
+dist/
+build/
+*.egg-info/
+
+# ── MLflow artifacts ─────────────────────────────────────────────────────────
+mlruns/
+mlartifacts/
+
+# ── Trained model files ───────────────────────────────────────────────────────
+models/*.pkl
+
+# ── Generated reports ─────────────────────────────────────────────────────────
+reports/*.png
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+
+# ── Data files ────────────────────────────────────────────────────────────────
+data/raw/
+data/processed/
+
+# ── IDE / OS ─────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# ── Coverage / test artifacts ─────────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/

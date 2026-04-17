@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="800" pageHeight="980" math="0" shadow="1">
+  <root>
+    <mxCell id="0" /><mxCell id="1" parent="0" />
+
+    <!-- ══ TITLE BANNER ══ -->
+    <mxCell id="banner" value="" style="rounded=0;fillColor=#1E7A3E;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="0" y="0" width="800" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="title" value="☁️  CloudAutoML — System Architecture" style="text;html=1;align=center;fontSize=18;fontStyle=1;fontColor=#FFFFFF;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+      <mxGeometry x="0" y="8" width="800" height="38" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ BLOCK 1: USER INPUT ══ -->
+    <mxCell id="B1" value="&lt;div style='font-size:30px;line-height:1'&gt;👤&lt;/div&gt;&lt;br&gt;&lt;b style='font-size:12px'&gt;User Input&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:10px;color:#555'&gt;Streamlit UI · CLI&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=3;arcSize=15;shadow=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="280" y="75" width="240" height="95" as="geometry"/>
+    </mxCell>
+
+    <!-- Arrow 1→2 -->
+    <mxCell id="a12" value="CSV file" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=2.5;fontSize=10;fontStyle=1;endArrow=block;endFill=1;" edge="1" source="B1" target="B2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ BLOCK 2: SMART ANALYSIS ══ -->
+    <mxCell id="B2" value="&lt;div style='font-size:30px;line-height:1'&gt;🔍&lt;/div&gt;&lt;br&gt;&lt;b style='font-size:12px'&gt;Smart Analysis&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:10px;color:#555'&gt;Analyzer · Meta-ML · PerfOpt · ResMgr&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#6A1B9A;strokeWidth=3;arcSize=15;shadow=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="280" y="210" width="240" height="95" as="geometry"/>
+    </mxCell>
+
+    <!-- Arrow 2→3 -->
+    <mxCell id="a23" value="strategy plan" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=2.5;fontSize=10;fontStyle=1;endArrow=block;endFill=1;" edge="1" source="B2" target="B3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ BLOCK 3: ORCHESTRATOR ══ -->
+    <mxCell id="B3" value="&lt;div style='font-size:30px;line-height:1'&gt;⚙️&lt;/div&gt;&lt;br&gt;&lt;b style='font-size:12px'&gt;Orchestrator&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:10px;color:#444'&gt;Preprocess · HPO (Optuna) · Parallel Train · Evaluate + SHAP&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#311B92;strokeWidth=3;arcSize=15;shadow=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="280" y="345" width="240" height="100" as="geometry"/>
+    </mxCell>
+
+    <!-- Arrow 3→4 -->
+    <mxCell id="a34" value="parallel threads" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=2.5;fontSize=10;fontStyle=1;endArrow=block;endFill=1;" edge="1" source="B3" target="B4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ BLOCK 4: MODEL WORKERS ══ -->
+    <mxCell id="B4" value="&lt;div style='font-size:30px;line-height:1'&gt;🤖&lt;/div&gt;&lt;br&gt;&lt;b style='font-size:12px'&gt;Model Workers&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:10px;color:#444'&gt;LR · RF · XGBoost · SVM&lt;br&gt;&lt;i&gt;All parallel ⚡&lt;/i&gt;&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#0D47A1;strokeWidth=3;arcSize=15;shadow=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="280" y="485" width="240" height="100" as="geometry"/>
+    </mxCell>
+
+    <!-- Arrow 4→5 -->
+    <mxCell id="a45" value="results + pkl" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=2.5;fontSize=10;fontStyle=1;endArrow=block;endFill=1;" edge="1" source="B4" target="B5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ BLOCK 5: ARTIFACT STORE ══ -->
+    <mxCell id="B5" value="&lt;div style='font-size:30px;line-height:1'&gt;💾&lt;/div&gt;&lt;br&gt;&lt;b style='font-size:12px'&gt;Artifact Store&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:10px;color:#555'&gt;best_model.pkl · deploy_meta.json&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F57F17;strokeWidth=3;arcSize=15;shadow=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="280" y="625" width="240" height="90" as="geometry"/>
+    </mxCell>
+
+    <!-- Arrow 5→6 -->
+    <mxCell id="a56" value="joblib.load()" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=2.5;fontSize=10;fontStyle=1;endArrow=block;endFill=1;" edge="1" source="B5" target="B6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ BLOCK 6: FastAPI ══ -->
+    <mxCell id="B6" value="&lt;div style='font-size:30px;line-height:1'&gt;🌐&lt;/div&gt;&lt;br&gt;&lt;b style='font-size:12px'&gt;FastAPI Server&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:10px;color:#555'&gt;POST /predict · GET /metrics&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#1A237E;strokeWidth=3;arcSize=15;shadow=1;verticalAlign=middle;" vertex="1" parent="1">
+      <mxGeometry x="280" y="755" width="240" height="90" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ SUPPORTING: MLflow (left side) ══ -->
+    <mxCell id="ml_b" value="&lt;div style='font-size:22px;line-height:1'&gt;📊&lt;/div&gt;&lt;b style='font-size:11px'&gt;MLflow&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;Experiment tracking&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#BF360C;strokeWidth=2;arcSize=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="60" y="360" width="150" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_orch_ml" value="log_metrics" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#BF360C;strokeWidth=1.5;dashed=1;fontSize=9;" edge="1" source="B3" target="ml_b" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ══ SUPPORTING: SHAP (right side) ══ -->
+    <mxCell id="shap_b" value="&lt;div style='font-size:22px;line-height:1'&gt;🔬&lt;/div&gt;&lt;b style='font-size:11px'&gt;SHAP + Ensemble&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;Feature importance · Stacking&lt;/span&gt;" style="rounded=2;whiteSpace=wrap;html=1;fillColor=#FBE9E7;strokeColor=#BF360C;strokeWidth=2;arcSize=12;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="590" y="495" width="155" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="a_mod_shap" value="top-N models" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#BF360C;strokeWidth=1.5;dashed=1;fontSize=9;" edge="1" source="B4" target="shap_b" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

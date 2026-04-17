@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="850" math="0" shadow="1">
+  <root>
+    <mxCell id="0" /><mxCell id="1" parent="0" />
+
+    <!-- TITLE -->
+    <mxCell id="banner" value="" style="fillColor=#1E7A3E;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="0" y="0" width="700" height="46" as="geometry"/>
+    </mxCell>
+    <mxCell id="ttl" value="⚙️  CloudAutoML — Training Pipeline" style="text;html=1;align=center;fontSize=15;fontStyle=1;fontColor=#FFFFFF;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="0" y="7" width="700" height="32" as="geometry"/>
+    </mxCell>
+
+    <!-- START -->
+    <mxCell id="start" value="▶  START" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1E7A3E;strokeColor=#145A2E;fontColor=#FFFFFF;fontSize=12;fontStyle=1;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="260" y="58" width="180" height="38" as="geometry"/>
+    </mxCell>
+
+    <!-- 1: Input + Analyze -->
+    <mxCell id="P1" value="&lt;b&gt;① Input &amp; Analysis&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;📂 CSV via Streamlit / CLI&lt;br&gt;🔍 analyze_dataset() → task_type · complexity · target&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#6A1B9A;strokeWidth=2;fontSize=11;shadow=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="195" y="112" width="310" height="58" as="geometry"/>
+    </mxCell>
+
+    <!-- D1: Target detected? (only kept decision) -->
+    <mxCell id="D1" value="🔷 Target column found?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F9A825;strokeWidth=2;fontSize=10;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="265" y="184" width="170" height="48" as="geometry"/>
+    </mxCell>
+    <mxCell id="err1" value="❌ STOP — target not detected" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#E53935;strokeWidth=2;fontSize=9;" vertex="1" parent="1">
+      <mxGeometry x="502" y="191" width="168" height="34" as="geometry"/>
+    </mxCell>
+    <mxCell id="e_no" value="NO" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E53935;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#E53935;exitX=1;exitY=0.5;" edge="1" source="D1" target="err1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- 2: Strategy -->
+    <mxCell id="P2" value="&lt;b&gt;② Strategy Planning&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;🧠 Meta-ML ranking (7 meta-features → best algorithms)&lt;br&gt;⚡ PerfOptimiser → latency · HPO advice · n_workers&lt;br&gt;💻 ResourceManager → cpu_allocated · mem_budget&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#6A1B9A;strokeWidth=2;fontSize=11;shadow=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="180" y="246" width="340" height="68" as="geometry"/>
+    </mxCell>
+
+    <!-- 3: Preprocess -->
+    <mxCell id="P3" value="&lt;b&gt;③ Preprocessing&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;🔀 StandardScaler + OHE · LabelEncoder · 80/20 split&lt;br&gt;🧵 ThreadPoolExecutor(n=cpu_allocated)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#311B92;strokeWidth=2;fontSize=11;shadow=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="195" y="328" width="310" height="56" as="geometry"/>
+    </mxCell>
+
+    <!-- 4: Parallel Training [big block] -->
+    <mxCell id="P4" value="&lt;b&gt;④ Parallel Model Training&lt;/b&gt;  &lt;i style='font-size:9px'&gt;(one thread per model)&lt;/i&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;🎯 Optuna TPE HPO (if advised) → best_params&lt;br&gt;🤖 model.fit(X_train) · ⏱ timed · 📟 peak RAM tracked&lt;br&gt;📊 accuracy / f1 / R² / RMSE · cross_val_score(cv=3)&lt;br&gt;💾 Save models/{name}.pkl&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1565C0;strokeWidth=2;fontSize=11;fontStyle=1;shadow=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="165" y="398" width="370" height="80" as="geometry"/>
+    </mxCell>
+
+    <!-- 5: Post-processing -->
+    <mxCell id="P5" value="&lt;b&gt;⑤ Post-Processing&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;🏆 Sort by metric → best model selected&lt;br&gt;📈 generate_plots() → bar · confusion matrix · feature importance&lt;br&gt;🔬 SHAP TreeExplainer (if enabled) · 🏗️ Stacking Ensemble (if enabled)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontSize=11;shadow=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="175" y="492" width="350" height="68" as="geometry"/>
+    </mxCell>
+
+    <!-- 6: Save + MLflow + Report -->
+    <mxCell id="P6" value="&lt;b&gt;⑥ Artifacts &amp; Logging&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;💾 best_model.pkl · preprocessor.pkl · deployment_meta.json&lt;br&gt;📊 MLflow log_params/metrics/artifact · 📄 PDF report (if enabled)&lt;br&gt;📝 Append to logs/metrics.jsonl · ⚡ Compute speedup_ratio&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#F9A825;strokeWidth=2;fontSize=11;shadow=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="175" y="574" width="350" height="68" as="geometry"/>
+    </mxCell>
+
+    <!-- 7: Return -->
+    <mxCell id="P7" value="&lt;b&gt;⑦ Return Result&lt;/b&gt;&lt;br&gt;&lt;span style='font-size:9px'&gt;📤 { results, best, summary_df, speedup, pdf_path } → UI / CLI&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#1A237E;strokeWidth=2;fontSize=11;shadow=1;arcSize=8;" vertex="1" parent="1">
+      <mxGeometry x="210" y="656" width="280" height="50" as="geometry"/>
+    </mxCell>
+
+    <!-- END -->
+    <mxCell id="end_n" value="⏹  END — TRAINING COMPLETE" style="ellipse;whiteSpace=wrap;html=1;fillColor=#1E7A3E;strokeColor=#145A2E;fontColor=#FFFFFF;fontSize=12;fontStyle=1;shadow=1;" vertex="1" parent="1">
+      <mxGeometry x="250" y="720" width="200" height="38" as="geometry"/>
+    </mxCell>
+
+    <!-- ════ EDGES ════ -->
+    <mxCell id="e01" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1E7A3E;strokeWidth=2;" edge="1" source="start" target="P1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e02" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=2;" edge="1" source="P1" target="D1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e03" value="YES" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1E7A3E;strokeWidth=2;fontSize=9;fontStyle=1;fontColor=#1E7A3E;exitX=0.5;exitY=1;" edge="1" source="D1" target="P2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e04" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#6A1B9A;strokeWidth=2;" edge="1" source="P2" target="P3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e05" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#311B92;strokeWidth=2;" edge="1" source="P3" target="P4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e06" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1565C0;strokeWidth=2;" edge="1" source="P4" target="P5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e07" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2E7D32;strokeWidth=2;" edge="1" source="P5" target="P6" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e08" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#F9A825;strokeWidth=2;" edge="1" source="P6" target="P7" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e09" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1E7A3E;strokeWidth=2;" edge="1" source="P7" target="end_n" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+  </root>
+</mxGraphModel>
