@@ -700,12 +700,12 @@ if st.session_state["df"] is not None:
             TXT     = "#374151"
             PALETTE = ["#16a34a","#2563eb","#d97706","#dc2626","#7c3aed","#0891b2","#059669","#ea580c"]
 
-            def _fig(w=5, h=3.8):
+            def _fig(w=7, h=4.5):
                 fig, ax = plt.subplots(figsize=(w, h), facecolor=BG)
                 ax.set_facecolor(BG2)
                 for sp in ax.spines.values():
                     sp.set_edgecolor(BORDER)
-                ax.tick_params(colors=TXT, labelsize=8)
+                ax.tick_params(colors=TXT, labelsize=9)
                 ax.xaxis.label.set_color(TXT)
                 ax.yaxis.label.set_color(TXT)
                 ax.title.set_color(GREEN)
@@ -713,64 +713,66 @@ if st.session_state["df"] is not None:
                 return fig, ax
 
             if not summary_df.empty and primary in summary_df.columns:
-                models_list  = summary_df["Model"].tolist()
-                colors_list  = PALETTE[:len(models_list)]
-                c1, c2, c3   = st.columns(3)
+                models_list = summary_df["Model"].tolist()
+                colors_list = PALETTE[:len(models_list)]
 
-                # ── Chart 1: Primary metric ───────────────────────────────────
+                # ── Row 1: Performance + CV Score side by side ────────────────
+                c1, c2 = st.columns(2)
+
                 with c1:
                     fig, ax = _fig()
                     vals = summary_df[primary].tolist()
-                    bars = ax.barh(models_list, vals, color=colors_list, edgecolor=BORDER, height=0.55)
+                    bars = ax.barh(models_list, vals, color=colors_list, edgecolor=BORDER, height=0.6)
                     best_idx = vals.index(max(vals))
                     bars[best_idx].set_edgecolor("#16a34a")
-                    bars[best_idx].set_linewidth(2)
+                    bars[best_idx].set_linewidth(2.5)
                     for bar, v in zip(bars, vals):
                         ax.text(v + 0.01, bar.get_y() + bar.get_height()/2,
-                                f"{v:.3f}", va="center", color=GREEN, fontsize=7.5, fontweight="bold")
-                    ax.set_xlabel(plabel, fontsize=8)
-                    ax.set_xlim(0, 1.1)
-                    ax.set_title(plabel, fontsize=10, fontweight="bold")
+                                f"{v:.3f}", va="center", color=GREEN, fontsize=9, fontweight="bold")
+                    ax.set_xlabel(plabel, fontsize=9)
+                    ax.set_xlim(0, 1.15)
+                    ax.set_title(plabel, fontsize=12, fontweight="bold", pad=10)
                     fig.tight_layout()
                     st.pyplot(fig)
                     plt.close(fig)
 
-                # ── Chart 2: CV Score ─────────────────────────────────────────
                 with c2:
                     if "CV Mean" in summary_df.columns:
                         fig, ax = _fig()
                         cv_means = summary_df["CV Mean"].tolist()
                         cv_stds  = summary_df["CV Std"].tolist() if "CV Std" in summary_df.columns else [0]*len(cv_means)
                         ax.bar(range(len(models_list)), cv_means, color=colors_list,
-                               edgecolor=BORDER, width=0.55,
-                               yerr=cv_stds, capsize=4,
-                               error_kw={"ecolor": "#d97706", "elinewidth": 1.5})
+                               edgecolor=BORDER, width=0.6,
+                               yerr=cv_stds, capsize=5,
+                               error_kw={"ecolor": "#d97706", "elinewidth": 2})
                         ax.set_xticks(range(len(models_list)))
-                        ax.set_xticklabels(models_list, rotation=30, ha="right", fontsize=7, color=TXT)
-                        ax.set_ylabel("CV Score", fontsize=8)
+                        ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TXT)
+                        ax.set_ylabel("CV Score", fontsize=9)
                         ax.set_ylim(0, 1.15)
-                        ax.set_title("CV Score (mean ± std)", fontsize=10, fontweight="bold")
+                        ax.set_title("Cross-Validation Score (mean ± std)", fontsize=12, fontweight="bold", pad=10)
+                        for bar, m in zip(ax.patches, cv_means):
+                            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.03,
+                                    f"{m:.3f}", ha="center", va="bottom", color=GREEN, fontsize=8, fontweight="bold")
                         fig.tight_layout()
                         st.pyplot(fig)
                         plt.close(fig)
 
-                # ── Chart 3: Training Time ────────────────────────────────────
-                with c3:
-                    if "Train Time (s)" in summary_df.columns:
-                        fig, ax = _fig()
-                        times = summary_df["Train Time (s)"].tolist()
-                        bars  = ax.bar(range(len(models_list)), times, color=colors_list,
-                                       edgecolor=BORDER, width=0.55)
-                        ax.set_xticks(range(len(models_list)))
-                        ax.set_xticklabels(models_list, rotation=30, ha="right", fontsize=7, color=TXT)
-                        ax.set_ylabel("Seconds", fontsize=8)
-                        ax.set_title("Train Time (s)", fontsize=10, fontweight="bold")
-                        for bar, t in zip(bars, times):
-                            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005,
-                                    f"{t:.2f}s", ha="center", va="bottom", color=GREEN, fontsize=7)
-                        fig.tight_layout()
-                        st.pyplot(fig)
-                        plt.close(fig)
+                # ── Row 2: Training Time full width ────────────────────────────
+                if "Train Time (s)" in summary_df.columns:
+                    fig, ax = _fig(w=11, h=4)
+                    times = summary_df["Train Time (s)"].tolist()
+                    bars  = ax.bar(range(len(models_list)), times, color=colors_list,
+                                   edgecolor=BORDER, width=0.55)
+                    ax.set_xticks(range(len(models_list)))
+                    ax.set_xticklabels(models_list, rotation=20, ha="right", fontsize=9, color=TXT)
+                    ax.set_ylabel("Seconds", fontsize=9)
+                    ax.set_title("Training Time per Model (seconds)", fontsize=12, fontweight="bold", pad=10)
+                    for bar, t in zip(bars, times):
+                        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005,
+                                f"{t:.2f}s", ha="center", va="bottom", color=GREEN, fontsize=9, fontweight="bold")
+                    fig.tight_layout()
+                    st.pyplot(fig)
+                    plt.close(fig)
 
             # ── SHAP images ───────────────────────────────────────────────────
             shap_imgs = [
@@ -781,7 +783,7 @@ if st.session_state["df"] is not None:
             ]
             if shap_imgs:
                 st.markdown('<div class="section-label">SHAP Feature Importance</div>', unsafe_allow_html=True)
-                cols = st.columns(min(len(shap_imgs), 3))
+                cols = st.columns(min(len(shap_imgs), 2))
                 for idx, (mdl, path) in enumerate(shap_imgs):
                     with cols[idx % len(cols)]:
                         st.image(path, caption=f"SHAP — {mdl}", use_column_width=True)
