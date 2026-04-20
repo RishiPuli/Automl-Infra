@@ -2,7 +2,7 @@
 app/streamlit_app.py
 ---------------------
 CloudAutoML – Resource-Aware AutoML Platform
-Dark-green premium theme | Mobile-responsive | No prediction panel.
+Clean light theme | Mobile-responsive | No prediction panel.
 
 Cloud-hardened:
   - All psutil calls wrapped in try/except with fallbacks
@@ -55,7 +55,7 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CSS — Dark Premium Theme, Mobile First
+# CSS — Clean Light SaaS Theme, Mobile First
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -64,33 +64,32 @@ st.markdown("""
   /* ── Global ── */
   html, body, [class*="css"] {
     font-family: 'Inter', sans-serif !important;
-    background-color: #0d1117 !important;
-    color: #e6edf3 !important;
+    background-color: #f7f8fa !important;
+    color: #1a1d23 !important;
   }
 
   /* ── Sidebar ── */
   [data-testid="stSidebar"] {
-    background: #161b22 !important;
-    border-right: 1px solid #30363d !important;
+    background: #ffffff !important;
+    border-right: 1px solid #e5e7eb !important;
   }
   [data-testid="stSidebar"] .stMarkdown p,
   [data-testid="stSidebar"] label,
   [data-testid="stSidebar"] .stMarkdown {
-    color: #c9d1d9 !important;
+    color: #374151 !important;
   }
   [data-testid="stSidebar"] h3 {
-    color: #58d68d !important;
+    color: #16a34a !important;
   }
 
   /* ── Hero header ── */
   .hero {
-    background: linear-gradient(135deg, #1a6b3c 0%, #22863a 50%, #2ea04f 100%);
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 60%, #4ade80 100%);
     border-radius: 16px;
     padding: 40px 36px 32px 36px;
     margin-bottom: 28px;
     color: #ffffff;
-    box-shadow: 0 8px 32px rgba(46,160,79,0.25);
-    border: 1px solid #2ea04f40;
+    box-shadow: 0 4px 24px rgba(22,163,74,0.22);
   }
   .hero h1 {
     font-size: clamp(1.6rem, 4vw, 2.4rem);
@@ -100,21 +99,21 @@ st.markdown("""
   }
   .hero p {
     font-size: clamp(0.85rem, 2vw, 1rem);
-    opacity: 0.9;
+    opacity: 0.92;
     margin: 0;
   }
 
   /* ── Section label ── */
   .section-label {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 2.5px;
     text-transform: uppercase;
-    color: #58d68d;
-    border-left: 4px solid #2ea04f;
-    padding: 4px 0 4px 14px;
+    color: #16a34a;
+    border-left: 4px solid #22c55e;
+    padding: 5px 0 5px 14px;
     margin: 32px 0 18px 0;
-    background: #1c2b1c;
+    background: #f0fdf4;
     border-radius: 0 6px 6px 0;
   }
 
@@ -126,27 +125,28 @@ st.markdown("""
     margin-bottom: 22px;
   }
   .metric-card {
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
     padding: 18px 16px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    transition: transform 0.2s, border-color 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   }
   .metric-card:hover {
     transform: translateY(-2px);
-    border-color: #2ea04f;
+    box-shadow: 0 4px 16px rgba(22,163,74,0.12);
+    border-color: #86efac;
   }
   .metric-card .m-val {
     font-size: clamp(1.3rem, 3vw, 1.8rem);
     font-weight: 700;
-    color: #58d68d;
+    color: #16a34a;
     line-height: 1;
   }
   .metric-card .m-lbl {
     font-size: 0.68rem;
-    color: #8b949e;
+    color: #6b7280;
     margin-top: 6px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -155,18 +155,18 @@ st.markdown("""
   /* ── Info tiles ── */
   .info-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
   .info-tile {
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 8px 16px;
     font-size: 0.85rem;
-    color: #c9d1d9;
+    color: #374151;
   }
-  .info-tile b { color: #58d68d; }
-  .info-tile code { 
-    background: #1c2b1c; 
-    color: #58d68d; 
-    padding: 2px 6px; 
+  .info-tile b { color: #16a34a; }
+  .info-tile code {
+    background: #f0fdf4;
+    color: #16a34a;
+    padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.8rem;
   }
@@ -180,99 +180,77 @@ st.markdown("""
     font-weight: 600;
     letter-spacing: 0.5px;
   }
-  .tag-clf  { background: #1c2b1c; color: #58d68d; border: 1px solid #2ea04f; }
-  .tag-reg  { background: #2b2200; color: #e3b341; border: 1px solid #9e6a03; }
-  .tag-sm   { background: #1a2b40; color: #79c0ff; border: 1px solid #1f6feb; }
-  .tag-med  { background: #2b2200; color: #e3b341; border: 1px solid #9e6a03; }
-  .tag-lg   { background: #3d1a1a; color: #f85149; border: 1px solid #da3633; }
+  .tag-clf  { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+  .tag-reg  { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+  .tag-sm   { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
+  .tag-med  { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+  .tag-lg   { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
 
   /* ── Allocation block ── */
   .alloc-block {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-left: 4px solid #2ea04f;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #22c55e;
     border-radius: 10px;
     padding: 20px 22px;
     font-size: 0.85rem;
     line-height: 2.1;
-    color: #c9d1d9;
+    color: #374151;
     margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
-  .alloc-block .key { color: #8b949e; }
-  .alloc-block .val { color: #58d68d; font-weight: 600; }
+  .alloc-block .key { color: #6b7280; }
+  .alloc-block .val { color: #16a34a; font-weight: 600; }
 
   /* ── Best model block ── */
   .best-block {
-    background: linear-gradient(135deg, #1c2b1c, #0d220d);
-    border: 1px solid #2ea04f;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1.5px solid #86efac;
     border-radius: 12px;
     padding: 22px 26px;
     margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(46,160,79,0.2);
+    box-shadow: 0 2px 12px rgba(22,163,74,0.1);
   }
   .best-block .b-name {
     font-size: clamp(1rem, 3vw, 1.25rem);
     font-weight: 700;
-    color: #58d68d;
+    color: #15803d;
   }
   .best-block .b-detail {
     font-size: 0.85rem;
-    color: #c9d1d9;
+    color: #374151;
     margin-top: 10px;
     line-height: 1.9;
   }
-  .best-block .b-detail strong { color: #58d68d; }
+  .best-block .b-detail strong { color: #16a34a; }
 
   /* ── Speedup banner ── */
   .speedup-banner {
-    background: linear-gradient(90deg, #1a3a4a, #0f2030);
-    border: 1px solid #1f6feb;
+    background: linear-gradient(90deg, #eff6ff, #f0f9ff);
+    border: 1px solid #bfdbfe;
     border-radius: 10px;
     padding: 16px 22px;
-    color: #79c0ff;
+    color: #1d4ed8;
     font-size: 0.9rem;
     margin: 16px 0;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 18px;
     flex-wrap: wrap;
   }
   .speedup-banner .sp-icon { font-size: 1.5rem; }
-  .speedup-banner .sp-val  { font-size: 1.3rem; font-weight: 700; color: #58d68d; }
-  .speedup-banner .sp-lbl  { font-size: 0.78rem; color: #8b949e; display: block; }
-
-  /* ── Viz section ── */
-  .viz-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-    margin: 18px 0;
-  }
-  .viz-card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  }
-  .viz-card-title {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #8b949e;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-  }
+  .speedup-banner .sp-val  { font-size: 1.3rem; font-weight: 700; color: #16a34a; }
+  .speedup-banner .sp-lbl  { font-size: 0.74rem; color: #6b7280; display: block; }
 
   /* ── Log window ── */
   .logwin {
-    background: #0d1117;
-    border: 1px solid #30363d;
+    background: #1e1e2e;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 14px 16px;
     font-family: 'Courier New', monospace;
     font-size: 0.76rem;
-    color: #7ee787;
+    color: #a3e635;
     max-height: 220px;
     overflow-y: auto;
     white-space: pre-wrap;
@@ -281,28 +259,28 @@ st.markdown("""
 
   /* ── Notice ── */
   .notice {
-    background: #2b2200;
-    border: 1px solid #9e6a03;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
     border-radius: 8px;
     padding: 10px 16px;
     font-size: 0.84rem;
-    color: #e3b341;
+    color: #92400e;
     margin: 8px 0;
   }
 
   /* ── MLflow block ── */
   .mlflow-block {
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 10px;
     padding: 18px 22px;
     font-size: 0.84rem;
-    color: #c9d1d9;
+    color: #374151;
     line-height: 2;
   }
   .mlflow-block code {
-    background: #1c2b1c;
-    color: #58d68d;
+    background: #f0fdf4;
+    color: #16a34a;
     padding: 2px 8px;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
@@ -310,21 +288,21 @@ st.markdown("""
 
   /* ── Landing box ── */
   .landing-box {
-    background: #161b22;
-    border: 2px dashed #30363d;
+    background: #ffffff;
+    border: 2px dashed #d1d5db;
     border-radius: 16px;
     padding: 60px 40px;
     text-align: center;
-    color: #8b949e;
+    color: #9ca3af;
     margin-top: 16px;
   }
 
   /* ── Streamlit overrides ── */
-  .stDataFrame { border: 1px solid #30363d !important; border-radius: 8px; }
+  .stDataFrame { border: 1px solid #e5e7eb !important; border-radius: 8px; }
   .stButton > button {
-    background: #238636 !important;
+    background: #16a34a !important;
     color: #ffffff !important;
-    border: 1px solid #2ea04f !important;
+    border: 1px solid #16a34a !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
     padding: 0.5rem 1.5rem !important;
@@ -332,35 +310,34 @@ st.markdown("""
     font-family: 'Inter', sans-serif !important;
   }
   .stButton > button:hover {
-    background: #2ea04f !important;
-    border-color: #3fb950 !important;
-    box-shadow: 0 0 12px rgba(46,160,79,0.3) !important;
+    background: #15803d !important;
+    border-color: #15803d !important;
+    box-shadow: 0 4px 14px rgba(22,163,74,0.25) !important;
     transform: translateY(-1px);
   }
   .stDownloadButton > button {
-    background: #161b22 !important;
-    color: #58d68d !important;
-    border: 1px solid #2ea04f !important;
+    background: #ffffff !important;
+    color: #16a34a !important;
+    border: 1px solid #86efac !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
   }
   .stTabs [data-baseweb="tab"] {
-    color: #8b949e !important;
+    color: #6b7280 !important;
     font-weight: 500;
   }
   .stTabs [aria-selected="true"] {
-    color: #58d68d !important;
-    border-bottom: 2px solid #58d68d !important;
+    color: #16a34a !important;
+    border-bottom: 2px solid #16a34a !important;
   }
-  .stProgress > div > div { background-color: #2ea04f !important; }
-  .stSlider [data-testid="stThumbValue"] { color: #58d68d !important; }
+  .stProgress > div > div { background-color: #16a34a !important; }
   div[data-testid="stExpander"] {
-    background: #161b22 !important;
-    border: 1px solid #30363d !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
     border-radius: 8px !important;
   }
   div[data-testid="stExpander"] summary {
-    color: #c9d1d9 !important;
+    color: #374151 !important;
   }
   .stAlert { border-radius: 8px !important; }
   #MainMenu { visibility: hidden; }
@@ -380,6 +357,9 @@ st.markdown("""
   }
 </style>
 """, unsafe_allow_html=True)
+
+# Force Streamlit's own theme to light
+st._config.set_option("theme.base", "light")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -718,15 +698,15 @@ if st.session_state["df"] is not None:
             primary = "accuracy" if task_type == "classification" else "r2"
             plabel  = "Accuracy"  if task_type == "classification" else "R² Score"
 
-            # Dark plot style
-            DARK_BG    = "#0d1117"
-            CARD_BG    = "#161b22"
-            GREEN      = "#2ea04f"
-            GREEN_L    = "#58d68d"
-            BORDER     = "#30363d"
-            TEXT_COLOR = "#c9d1d9"
-            SUBTEXT    = "#8b949e"
-            PALETTE    = ["#2ea04f","#1f6feb","#e3b341","#f85149","#bc8cff","#79c0ff","#58d68d","#ffa657"]
+            # Light plot style
+            DARK_BG    = "#ffffff"
+            CARD_BG    = "#f7f8fa"
+            GREEN      = "#16a34a"
+            GREEN_L    = "#15803d"
+            BORDER     = "#e5e7eb"
+            TEXT_COLOR = "#374151"
+            SUBTEXT    = "#6b7280"
+            PALETTE    = ["#16a34a","#2563eb","#d97706","#dc2626","#7c3aed","#0891b2","#059669","#ea580c"]
 
             def _dark_fig(w=7, h=4):
                 fig, ax = plt.subplots(figsize=(w, h), facecolor=DARK_BG)
@@ -737,7 +717,7 @@ if st.session_state["df"] is not None:
                 ax.xaxis.label.set_color(TEXT_COLOR)
                 ax.yaxis.label.set_color(TEXT_COLOR)
                 ax.title.set_color(GREEN_L)
-                ax.grid(True, color=BORDER, linewidth=0.5, alpha=0.6)
+                ax.grid(True, color=BORDER, linewidth=0.5, alpha=0.8)
                 return fig, ax
 
             # Build display data from summary_df
@@ -853,7 +833,7 @@ if st.session_state["df"] is not None:
                         fig, ax = _dark_fig(8, 3)
                         categories = ["Sequential\n(estimate)", "Parallel\n(actual)"]
                         values     = [seq_t, wall_t]
-                        bar_colors = ["#f85149", "#2ea04f"]
+                        bar_colors = ["#ef4444", "#16a34a"]
                         bars = ax.bar(categories, values, color=bar_colors, edgecolor=BORDER, width=0.4)
                         for bar, v in zip(bars, values):
                             ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.2,
@@ -951,13 +931,13 @@ if st.session_state["df"] is not None:
                             vals_r += vals_r[:1]
                             color = colors_list[idx % len(colors_list)]
                             ax.plot(angles, vals_r, linewidth=2, color=color)
-                            ax.fill(angles, vals_r, alpha=0.15, color=color)
+                            ax.fill(angles, vals_r, alpha=0.12, color=color)
                         ax.set_title("Model Capability Radar", color=GREEN_L, fontsize=12,
                                      fontweight="bold", pad=20)
                         handles = [mpatches.Patch(color=colors_list[i], label=m)
                                    for i, m in enumerate(models_list)]
                         ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.35, 1.15),
-                                  facecolor=CARD_BG, edgecolor=BORDER, fontsize=8,
+                                  facecolor=DARK_BG, edgecolor=BORDER, fontsize=8,
                                   labelcolor=TEXT_COLOR)
                         fig.tight_layout()
                         st.pyplot(fig)
