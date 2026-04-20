@@ -960,7 +960,7 @@ if st.session_state["df"] is not None:
                                 if i + j < len(shap_imgs):
                                     mdl, path = shap_imgs[i + j]
                                     with col:
-                                        st.image(path, caption=f"SHAP — {mdl}", use_container_width=True)
+                                        st.image(path, caption=f"SHAP — {mdl}", use_column_width=True)
                     else:
                         st.info("SHAP plots will appear here after training with SHAP enabled.")
 
@@ -979,7 +979,7 @@ if st.session_state["df"] is not None:
                         if i + j < len(eval_plots):
                             mdl, path = eval_plots[i + j]
                             with col:
-                                st.image(path, caption=mdl, use_container_width=True)
+                                st.image(path, caption=mdl, use_column_width=True)
 
         # Training log
         if st.session_state["logs"]:
