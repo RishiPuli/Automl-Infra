@@ -286,8 +286,8 @@ def _log_to_mlflow(results, task, complexity):
     try:
         import mlflow          # lazy import — safe if mlflow not installed
         import mlflow.sklearn
-    except ImportError:
-        log.warning("mlflow not installed — skipping experiment tracking.")
+    except Exception:
+        log.warning("mlflow unavailable (import error) — skipping experiment tracking.")
         return
 
     try:
