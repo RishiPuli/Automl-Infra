@@ -615,25 +615,20 @@ if st.session_state["df"] is not None:
             # ── Parallel Execution Time Banner ────────────────────────────────
             if speedup_info:
                 wall   = speedup_info.get("wall", 0)
-                seq    = speedup_info.get("sequential_estimate", 0)
                 sp_val = speedup_info.get("speedup", 1)
                 st.markdown(f"""
                 <div class="speedup-banner">
                   <div class="sp-icon">⚡</div>
                   <div>
-                    <span class="sp-lbl">Parallel Wall Time</span>
+                    <span class="sp-lbl">Parallel Execution Time</span>
                     <span class="sp-val">{wall:.1f}s</span>
                   </div>
                   <div>
-                    <span class="sp-lbl">Sequential Estimate</span>
-                    <span class="sp-val">{seq:.1f}s</span>
-                  </div>
-                  <div>
-                    <span class="sp-lbl">Parallel Speedup</span>
+                    <span class="sp-lbl">Speedup Factor</span>
                     <span class="sp-val">{sp_val:.2f}×</span>
                   </div>
-                  <div style="font-size:0.82rem; color:#8b949e;">
-                    Trained {len(results)} models concurrently using ThreadPoolExecutor
+                  <div style="font-size:0.82rem; color:#6b7280;">
+                    {len(results)} models trained concurrently using ThreadPoolExecutor
                   </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -690,296 +685,108 @@ if st.session_state["df"] is not None:
             if not summary_df.empty:
                 st.dataframe(summary_df.style.format(precision=4), use_container_width=True)
 
-            # ═══════════════════════════════════════════════════════════════════
-            # VISUALIZATIONS
-            # ═══════════════════════════════════════════════════════════════════
+            # ════════════════════════════════════════
+            # VISUALIZATIONS — 3 clean charts
+            # ════════════════════════════════════════
             st.markdown('<div class="section-label">Model Visualizations</div>', unsafe_allow_html=True)
 
             primary = "accuracy" if task_type == "classification" else "r2"
             plabel  = "Accuracy"  if task_type == "classification" else "R² Score"
 
-            # Light plot style
-            DARK_BG    = "#ffffff"
-            CARD_BG    = "#f7f8fa"
-            GREEN      = "#16a34a"
-            GREEN_L    = "#15803d"
-            BORDER     = "#e5e7eb"
-            TEXT_COLOR = "#374151"
-            SUBTEXT    = "#6b7280"
-            PALETTE    = ["#16a34a","#2563eb","#d97706","#dc2626","#7c3aed","#0891b2","#059669","#ea580c"]
+            BG      = "#ffffff"
+            BG2     = "#f7f8fa"
+            GREEN   = "#15803d"
+            BORDER  = "#e5e7eb"
+            TXT     = "#374151"
+            PALETTE = ["#16a34a","#2563eb","#d97706","#dc2626","#7c3aed","#0891b2","#059669","#ea580c"]
 
-            def _dark_fig(w=7, h=4):
-                fig, ax = plt.subplots(figsize=(w, h), facecolor=DARK_BG)
-                ax.set_facecolor(CARD_BG)
-                for spine in ax.spines.values():
-                    spine.set_edgecolor(BORDER)
-                ax.tick_params(colors=TEXT_COLOR, labelsize=8)
-                ax.xaxis.label.set_color(TEXT_COLOR)
-                ax.yaxis.label.set_color(TEXT_COLOR)
-                ax.title.set_color(GREEN_L)
+            def _fig(w=5, h=3.8):
+                fig, ax = plt.subplots(figsize=(w, h), facecolor=BG)
+                ax.set_facecolor(BG2)
+                for sp in ax.spines.values():
+                    sp.set_edgecolor(BORDER)
+                ax.tick_params(colors=TXT, labelsize=8)
+                ax.xaxis.label.set_color(TXT)
+                ax.yaxis.label.set_color(TXT)
+                ax.title.set_color(GREEN)
                 ax.grid(True, color=BORDER, linewidth=0.5, alpha=0.8)
                 return fig, ax
 
-            # Build display data from summary_df
             if not summary_df.empty and primary in summary_df.columns:
+                models_list  = summary_df["Model"].tolist()
+                colors_list  = PALETTE[:len(models_list)]
+                c1, c2, c3   = st.columns(3)
 
-                tab_perf, tab_time, tab_cv, tab_radar, tab_shap = st.tabs([
-                    "📈 Performance", "⏱️ Training Time", "🔄 Cross-Validation", "🕸️ Radar Chart", "🔍 SHAP"
-                ])
+                # ── Chart 1: Primary metric ───────────────────────────────────
+                with c1:
+                    fig, ax = _fig()
+                    vals = summary_df[primary].tolist()
+                    bars = ax.barh(models_list, vals, color=colors_list, edgecolor=BORDER, height=0.55)
+                    best_idx = vals.index(max(vals))
+                    bars[best_idx].set_edgecolor("#16a34a")
+                    bars[best_idx].set_linewidth(2)
+                    for bar, v in zip(bars, vals):
+                        ax.text(v + 0.01, bar.get_y() + bar.get_height()/2,
+                                f"{v:.3f}", va="center", color=GREEN, fontsize=7.5, fontweight="bold")
+                    ax.set_xlabel(plabel, fontsize=8)
+                    ax.set_xlim(0, 1.1)
+                    ax.set_title(plabel, fontsize=10, fontweight="bold")
+                    fig.tight_layout()
+                    st.pyplot(fig)
+                    plt.close(fig)
 
-                models_list = summary_df["Model"].tolist()
-                colors_list = PALETTE[:len(models_list)]
-
-                # ── Tab 1: Performance Bar Chart ──────────────────────────────
-                with tab_perf:
-                    col_v1, col_v2 = st.columns([1, 1])
-
-                    with col_v1:
-                        fig, ax = _dark_fig(6, 4)
-                        vals = summary_df[primary].tolist()
-                        bars = ax.barh(models_list, vals, color=colors_list, edgecolor=BORDER, height=0.6)
-                        ax.set_xlabel(plabel, color=TEXT_COLOR, fontsize=9)
-                        ax.set_title(f"Model {plabel} Comparison", fontsize=10, color=GREEN_L, fontweight="bold")
-                        ax.set_xlim(0, 1.05)
-                        for bar, val in zip(bars, vals):
-                            ax.text(val + 0.01, bar.get_y() + bar.get_height()/2,
-                                    f"{val:.3f}", va="center", color=GREEN_L, fontsize=8, fontweight="bold")
-                        # Highlight best
-                        best_idx = vals.index(max(vals))
-                        bars[best_idx].set_edgecolor("#58d68d")
-                        bars[best_idx].set_linewidth(2)
-                        fig.tight_layout()
-                        st.pyplot(fig)
-                        plt.close(fig)
-
-                    with col_v2:
-                        # F1 / MAE secondary metric
-                        sec_col = "f1_score" if "f1_score" in summary_df.columns else ("mae" if "mae" in summary_df.columns else None)
-                        if sec_col:
-                            sec_label = "F1 Score" if sec_col == "f1_score" else "MAE"
-                            fig, ax = _dark_fig(6, 4)
-                            vals2 = summary_df[sec_col].tolist()
-                            ax.bar(models_list, vals2, color=colors_list, edgecolor=BORDER, width=0.6)
-                            ax.set_ylabel(sec_label, color=TEXT_COLOR, fontsize=9)
-                            ax.set_title(f"{sec_label} by Model", fontsize=10, color=GREEN_L, fontweight="bold")
-                            ax.set_xticks(range(len(models_list)))
-                            ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
-                            fig.tight_layout()
-                            st.pyplot(fig)
-                            plt.close(fig)
-                        else:
-                            # RMSE fallback
-                            if "rmse" in summary_df.columns:
-                                fig, ax = _dark_fig(6, 4)
-                                vals_rmse = summary_df["rmse"].tolist()
-                                ax.bar(models_list, vals_rmse, color=colors_list, edgecolor=BORDER, width=0.6)
-                                ax.set_ylabel("RMSE", color=TEXT_COLOR, fontsize=9)
-                                ax.set_title("RMSE by Model", fontsize=10, color=GREEN_L, fontweight="bold")
-                                ax.set_xticks(range(len(models_list)))
-                                ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
-                                fig.tight_layout()
-                                st.pyplot(fig)
-                                plt.close(fig)
-
-                # ── Tab 2: Training Time + RAM ────────────────────────────────
-                with tab_time:
-                    col_t1, col_t2 = st.columns([1, 1])
-
-                    with col_t1:
-                        if "Train Time (s)" in summary_df.columns:
-                            fig, ax = _dark_fig(6, 4)
-                            times = summary_df["Train Time (s)"].tolist()
-                            bars = ax.bar(models_list, times, color=colors_list, edgecolor=BORDER, width=0.6)
-                            ax.set_ylabel("Train Time (s)", color=TEXT_COLOR, fontsize=9)
-                            ax.set_title("Training Time per Model", fontsize=10, color=GREEN_L, fontweight="bold")
-                            ax.set_xticks(range(len(models_list)))
-                            ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
-                            for bar, t in zip(bars, times):
-                                ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                                        f"{t:.2f}s", ha="center", va="bottom", color=GREEN_L, fontsize=8)
-                            fig.tight_layout()
-                            st.pyplot(fig)
-                            plt.close(fig)
-
-                    with col_t2:
-                        if "Peak RAM (MB)" in summary_df.columns:
-                            fig, ax = _dark_fig(6, 4)
-                            rams = summary_df["Peak RAM (MB)"].tolist()
-                            ax.barh(models_list, rams, color="#1f6feb", edgecolor=BORDER, height=0.6)
-                            ax.set_xlabel("Peak RAM (MB)", color=TEXT_COLOR, fontsize=9)
-                            ax.set_title("Peak Memory Usage", fontsize=10, color="#79c0ff", fontweight="bold")
-                            ax.tick_params(colors=TEXT_COLOR, labelsize=8)
-                            for spine in ax.spines.values():
-                                spine.set_edgecolor(BORDER)
-                            fig.tight_layout()
-                            st.pyplot(fig)
-                            plt.close(fig)
-
-                    # Parallel vs Sequential time comparison
-                    if speedup_info:
-                        st.markdown("---")
-                        col_sp1, col_sp2, col_sp3 = st.columns(3)
-                        with col_sp1:
-                            wall_t = speedup_info.get("wall", 0)
-                            st.metric("⚡ Parallel Wall Time", f"{wall_t:.1f}s")
-                        with col_sp2:
-                            seq_t = speedup_info.get("sequential_estimate", 0)
-                            st.metric("🐌 Sequential Estimate", f"{seq_t:.1f}s")
-                        with col_sp3:
-                            sp = speedup_info.get("speedup", 1)
-                            st.metric("🚀 Speedup Factor", f"{sp:.2f}×", delta=f"saved {max(0, seq_t - wall_t):.1f}s")
-
-                        # Speedup visual
-                        fig, ax = _dark_fig(8, 3)
-                        categories = ["Sequential\n(estimate)", "Parallel\n(actual)"]
-                        values     = [seq_t, wall_t]
-                        bar_colors = ["#ef4444", "#16a34a"]
-                        bars = ax.bar(categories, values, color=bar_colors, edgecolor=BORDER, width=0.4)
-                        for bar, v in zip(bars, values):
-                            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.2,
-                                    f"{v:.1f}s", ha="center", va="bottom", color=TEXT_COLOR, fontsize=10, fontweight="bold")
-                        ax.set_ylabel("Time (seconds)", color=TEXT_COLOR, fontsize=9)
-                        ax.set_title(f"Parallel Execution Speedup: {sp:.2f}×", fontsize=11, color=GREEN_L, fontweight="bold")
-                        ax.set_facecolor(CARD_BG)
-                        fig.patch.set_facecolor(DARK_BG)
-                        fig.tight_layout()
-                        st.pyplot(fig)
-                        plt.close(fig)
-
-                # ── Tab 3: Cross-Validation ───────────────────────────────────
-                with tab_cv:
-                    if "CV Mean" in summary_df.columns and "CV Std" in summary_df.columns:
-                        fig, ax = _dark_fig(8, 4.5)
+                # ── Chart 2: CV Score ─────────────────────────────────────────
+                with c2:
+                    if "CV Mean" in summary_df.columns:
+                        fig, ax = _fig()
                         cv_means = summary_df["CV Mean"].tolist()
-                        cv_stds  = summary_df["CV Std"].tolist()
-                        x = range(len(models_list))
-                        bars = ax.bar(x, cv_means, color=colors_list, edgecolor=BORDER, width=0.55,
-                                      yerr=cv_stds, capsize=6, error_kw={"ecolor": "#e3b341", "elinewidth": 2})
-                        ax.set_xticks(list(x))
-                        ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
-                        ax.set_ylabel("CV Score", color=TEXT_COLOR, fontsize=9)
-                        ax.set_title("Cross-Validation Scores (Mean ± Std)", fontsize=11, color=GREEN_L, fontweight="bold")
-                        ax.set_ylim(0, 1.1)
-                        for bar, m, s in zip(bars, cv_means, cv_stds):
-                            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + s + 0.02,
-                                    f"{m:.3f}", ha="center", va="bottom", color=GREEN_L, fontsize=8, fontweight="bold")
+                        cv_stds  = summary_df["CV Std"].tolist() if "CV Std" in summary_df.columns else [0]*len(cv_means)
+                        ax.bar(range(len(models_list)), cv_means, color=colors_list,
+                               edgecolor=BORDER, width=0.55,
+                               yerr=cv_stds, capsize=4,
+                               error_kw={"ecolor": "#d97706", "elinewidth": 1.5})
+                        ax.set_xticks(range(len(models_list)))
+                        ax.set_xticklabels(models_list, rotation=30, ha="right", fontsize=7, color=TXT)
+                        ax.set_ylabel("CV Score", fontsize=8)
+                        ax.set_ylim(0, 1.15)
+                        ax.set_title("CV Score (mean ± std)", fontsize=10, fontweight="bold")
                         fig.tight_layout()
                         st.pyplot(fig)
                         plt.close(fig)
 
-                        # Heatmap of all metrics
-                        metric_cols = [c for c in summary_df.columns
-                                       if c not in ["Model", "Workers"] and summary_df[c].dtype != object]
-                        if len(metric_cols) >= 2:
-                            st.markdown("**📋 Metrics Heatmap**")
-                            heat_df = summary_df[["Model"] + metric_cols].set_index("Model")
-                            norm_df = (heat_df - heat_df.min()) / (heat_df.max() - heat_df.min() + 1e-9)
-                            fig2, ax2 = plt.subplots(
-                                figsize=(min(12, 2 + len(metric_cols)*1.5), max(3, len(models_list)*0.7)),
-                                facecolor=DARK_BG
-                            )
-                            ax2.set_facecolor(DARK_BG)
-                            im = ax2.imshow(norm_df.values, cmap="YlGn", aspect="auto", vmin=0, vmax=1)
-                            ax2.set_xticks(range(len(metric_cols)))
-                            ax2.set_xticklabels(metric_cols, rotation=30, ha="right", color=TEXT_COLOR, fontsize=8)
-                            ax2.set_yticks(range(len(models_list)))
-                            ax2.set_yticklabels(models_list, color=TEXT_COLOR, fontsize=8)
-                            for i in range(len(models_list)):
-                                for j in range(len(metric_cols)):
-                                    ax2.text(j, i, f"{heat_df.values[i,j]:.3f}",
-                                             ha="center", va="center", fontsize=7, color="#0d1117", fontweight="bold")
-                            ax2.set_title("Normalized Metrics Heatmap (higher = better)", color=GREEN_L, fontsize=10, fontweight="bold")
-                            cbar = fig2.colorbar(im, ax=ax2)
-                            cbar.ax.tick_params(colors=TEXT_COLOR, labelsize=7)
-                            fig2.tight_layout()
-                            st.pyplot(fig2)
-                            plt.close(fig2)
-
-                # ── Tab 4: Radar Chart ────────────────────────────────────────
-                with tab_radar:
-                    radar_metrics = [c for c in [primary, "CV Mean", "Train Time (s)", "Peak RAM (MB)"]
-                                     if c in summary_df.columns]
-                    if len(radar_metrics) >= 3 and len(models_list) >= 2:
-                        radar_data = summary_df[["Model"] + radar_metrics].copy()
-                        # Normalize each metric 0–1 (invert time/RAM so higher = better)
-                        for col in radar_metrics:
-                            mn, mx = radar_data[col].min(), radar_data[col].max()
-                            if mx > mn:
-                                if col in ["Train Time (s)", "Peak RAM (MB)"]:
-                                    radar_data[col] = 1 - (radar_data[col] - mn) / (mx - mn)
-                                else:
-                                    radar_data[col] = (radar_data[col] - mn) / (mx - mn)
-                            else:
-                                radar_data[col] = 1.0
-
-                        N      = len(radar_metrics)
-                        angles = [n / float(N) * 2 * np.pi for n in range(N)]
-                        angles += angles[:1]
-
-                        fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True), facecolor=DARK_BG)
-                        ax.set_facecolor(CARD_BG)
-                        ax.spines["polar"].set_color(BORDER)
-                        ax.tick_params(colors=TEXT_COLOR, labelsize=9)
-                        ax.set_xticks(angles[:-1])
-                        ax.set_xticklabels(radar_metrics, color=TEXT_COLOR, fontsize=9)
-                        ax.set_yticklabels([])
-                        ax.yaxis.grid(True, color=BORDER, linewidth=0.5)
-                        ax.xaxis.grid(True, color=BORDER, linewidth=0.5)
-
-                        for idx, row in radar_data.iterrows():
-                            vals_r = row[radar_metrics].tolist()
-                            vals_r += vals_r[:1]
-                            color = colors_list[idx % len(colors_list)]
-                            ax.plot(angles, vals_r, linewidth=2, color=color)
-                            ax.fill(angles, vals_r, alpha=0.12, color=color)
-                        ax.set_title("Model Capability Radar", color=GREEN_L, fontsize=12,
-                                     fontweight="bold", pad=20)
-                        handles = [mpatches.Patch(color=colors_list[i], label=m)
-                                   for i, m in enumerate(models_list)]
-                        ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.35, 1.15),
-                                  facecolor=DARK_BG, edgecolor=BORDER, fontsize=8,
-                                  labelcolor=TEXT_COLOR)
+                # ── Chart 3: Training Time ────────────────────────────────────
+                with c3:
+                    if "Train Time (s)" in summary_df.columns:
+                        fig, ax = _fig()
+                        times = summary_df["Train Time (s)"].tolist()
+                        bars  = ax.bar(range(len(models_list)), times, color=colors_list,
+                                       edgecolor=BORDER, width=0.55)
+                        ax.set_xticks(range(len(models_list)))
+                        ax.set_xticklabels(models_list, rotation=30, ha="right", fontsize=7, color=TXT)
+                        ax.set_ylabel("Seconds", fontsize=8)
+                        ax.set_title("Train Time (s)", fontsize=10, fontweight="bold")
+                        for bar, t in zip(bars, times):
+                            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005,
+                                    f"{t:.2f}s", ha="center", va="bottom", color=GREEN, fontsize=7)
                         fig.tight_layout()
                         st.pyplot(fig)
                         plt.close(fig)
-                    else:
-                        st.info("Need at least 2 models and 3 metrics for radar chart.")
 
-                # ── Tab 5: SHAP ───────────────────────────────────────────────
-                with tab_shap:
-                    shap_imgs = [
-                        (r["name"], p)
-                        for r in results
-                        for p in r.get("plot_paths", [])
-                        if "shap_" in os.path.basename(p) and os.path.isfile(p)
-                    ]
-                    if shap_imgs:
-                        for i in range(0, len(shap_imgs), 2):
-                            cols = st.columns(min(2, len(shap_imgs) - i))
-                            for j, col in enumerate(cols):
-                                if i + j < len(shap_imgs):
-                                    mdl, path = shap_imgs[i + j]
-                                    with col:
-                                        st.image(path, caption=f"SHAP — {mdl}", use_column_width=True)
-                    else:
-                        st.info("SHAP plots will appear here after training with SHAP enabled.")
-
-            # ── Eval plots from disk ───────────────────────────────────────────
-            eval_plots = [
+            # ── SHAP images ───────────────────────────────────────────────────
+            shap_imgs = [
                 (r["name"], p)
                 for r in results
                 for p in r.get("plot_paths", [])
-                if "shap_" not in os.path.basename(p) and os.path.isfile(p)
+                if "shap_" in os.path.basename(p) and os.path.isfile(p)
             ]
-            if eval_plots:
-                st.markdown('<div class="section-label">Evaluation Plots</div>', unsafe_allow_html=True)
-                for i in range(0, len(eval_plots), 2):
-                    cols = st.columns(min(2, len(eval_plots) - i))
-                    for j, col in enumerate(cols):
-                        if i + j < len(eval_plots):
-                            mdl, path = eval_plots[i + j]
-                            with col:
-                                st.image(path, caption=mdl, use_column_width=True)
+            if shap_imgs:
+                st.markdown('<div class="section-label">SHAP Feature Importance</div>', unsafe_allow_html=True)
+                cols = st.columns(min(len(shap_imgs), 3))
+                for idx, (mdl, path) in enumerate(shap_imgs):
+                    with cols[idx % len(cols)]:
+                        st.image(path, caption=f"SHAP — {mdl}", use_column_width=True)
+
+
 
         # Training log
         if st.session_state["logs"]:
