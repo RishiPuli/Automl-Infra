@@ -13,10 +13,17 @@ Cloud-hardened:
 
 import sys
 import os
+import traceback
 
+# Add cppe_project/ dir (parent of app/) to sys.path so core/, utils/ resolve
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
+
+# Also try repo root as fallback (Streamlit Cloud CWD is repo root)
+REPO_ROOT = os.path.abspath(os.path.join(ROOT, ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
 import io
 import json
@@ -38,11 +45,13 @@ try:
 except Exception:
     _rm_ok = False
 
+_orch_err = ""
 try:
     from core.orchestrator import run_pipeline
     _orch_ok = True
-except Exception:
+except Exception as _e:
     _orch_ok = False
+    _orch_err = traceback.format_exc()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Page config
@@ -546,7 +555,10 @@ if st.session_state["df"] is not None:
     st.markdown('<div class="section-label">Step 4 — Parallel Training</div>', unsafe_allow_html=True)
 
     if not _orch_ok:
-        st.error("Orchestrator module is not available. Check your installation.")
+        st.error("Orchestrator module is not available. See details below.")
+        if _orch_err:
+            with st.expander("🔍 Import Error Details (for debugging)", expanded=True):
+                st.code(_orch_err, language="python")
         st.stop()
 
     if not st.session_state["trained"]:

@@ -25,8 +25,6 @@ import joblib
 import threading
 import numpy as np
 import pandas as pd
-import mlflow
-import mlflow.sklearn
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from sklearn.compose import ColumnTransformer
@@ -44,8 +42,11 @@ from utils.logger import get_logger
 
 log = get_logger("Orchestrator")
 
-MODELS_DIR      = "models"
-REPORTS_DIR     = "reports"
+# Use absolute paths so cloud deployments write to correct dir
+_HERE           = os.path.dirname(os.path.abspath(__file__))
+_CPPE_ROOT      = os.path.abspath(os.path.join(_HERE, ".."))
+MODELS_DIR      = os.path.join(_CPPE_ROOT, "models")
+REPORTS_DIR     = os.path.join(_CPPE_ROOT, "reports")
 EXPERIMENT_NAME = "CloudAutoML"
 SAMPLE_LIMIT    = 5000
 
@@ -280,7 +281,15 @@ def _train_worker(name, X_train, X_test, y_train, y_test,
 # ── MLflow logging (main thread only) ─────────────────────────────────────────
 
 def _log_to_mlflow(results, task, complexity):
-    """Log all training results to MLflow. Must run on the main thread."""
+    """Log all training results to MLflow. Must run on the main thread.
+    Uses lazy import so mlflow failures never block the orchestrator import."""
+    try:
+        import mlflow          # lazy import — safe if mlflow not installed
+        import mlflow.sklearn
+    except ImportError:
+        log.warning("mlflow not installed — skipping experiment tracking.")
+        return
+
     try:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         mlruns_path  = os.path.join(project_root, "mlruns")
@@ -312,6 +321,7 @@ def _log_to_mlflow(results, task, complexity):
                     pass
 
         log.info("MLflow: logged %d runs -> %s", len(results), mlruns_path)
+
     except Exception as exc:
         log.exception("MLflow logging failed: %s", exc)
 

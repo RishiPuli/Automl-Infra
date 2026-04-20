@@ -61,17 +61,20 @@ def get_logger(name: str = "CloudAutoML", level: int = logging.DEBUG) -> logging
     sh.setFormatter(ColourFormatter())
     logger.addHandler(sh)
 
-    # ── Rotating file handler ────────────────────────────────────────────────
-    os.makedirs(LOG_DIR, exist_ok=True)
-    fh = RotatingFileHandler(
-        LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-    )
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S",
-    ))
-    logger.addHandler(fh)
+    # ── Rotating file handler (optional — skipped on read-only filesystems) ──
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+        fh = RotatingFileHandler(
+            LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
+        )
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(
+            "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+            datefmt="%Y-%m-%dT%H:%M:%S",
+        ))
+        logger.addHandler(fh)
+    except Exception:
+        pass   # Cloud env may have read-only FS — console logging is enough
 
     return logger
 
