@@ -2,7 +2,7 @@
 app/streamlit_app.py
 ---------------------
 CloudAutoML – Resource-Aware AutoML Platform
-White + Light-Green theme  |  Predict panel at the bottom.
+Dark-green premium theme | Mobile-responsive | No prediction panel.
 
 Cloud-hardened:
   - All psutil calls wrapped in try/except with fallbacks
@@ -24,6 +24,10 @@ import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 from utils.dataset_analyzer import analyze_dataset, get_recommended_models
 
@@ -47,93 +51,102 @@ st.set_page_config(
     page_title="CloudAutoML",
     page_icon="☁️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CSS  —  White + Light-Green theme
+# CSS — Dark Premium Theme, Mobile First
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
   /* ── Global ── */
   html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-    background-color: #f5faf5;
-    color: #1a2e1a;
+    font-family: 'Inter', sans-serif !important;
+    background-color: #0d1117 !important;
+    color: #e6edf3 !important;
   }
 
   /* ── Sidebar ── */
   [data-testid="stSidebar"] {
-    background: #ffffff;
-    border-right: 1px solid #d6ead6;
+    background: #161b22 !important;
+    border-right: 1px solid #30363d !important;
   }
   [data-testid="stSidebar"] .stMarkdown p,
-  [data-testid="stSidebar"] label {
-    color: #2d4a2d;
+  [data-testid="stSidebar"] label,
+  [data-testid="stSidebar"] .stMarkdown {
+    color: #c9d1d9 !important;
+  }
+  [data-testid="stSidebar"] h3 {
+    color: #58d68d !important;
   }
 
   /* ── Hero header ── */
   .hero {
-    background: linear-gradient(135deg, #1e7a3e 0%, #28a85e 50%, #42c97a 100%);
-    border-radius: 14px;
-    padding: 36px 40px 30px 40px;
-    margin-bottom: 32px;
+    background: linear-gradient(135deg, #1a6b3c 0%, #22863a 50%, #2ea04f 100%);
+    border-radius: 16px;
+    padding: 40px 36px 32px 36px;
+    margin-bottom: 28px;
     color: #ffffff;
-    box-shadow: 0 4px 24px rgba(30,122,62,0.18);
+    box-shadow: 0 8px 32px rgba(46,160,79,0.25);
+    border: 1px solid #2ea04f40;
   }
   .hero h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    margin: 0 0 6px 0;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 800;
+    margin: 0 0 8px 0;
     letter-spacing: -0.5px;
   }
   .hero p {
-    font-size: 1rem;
-    opacity: 0.88;
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    opacity: 0.9;
     margin: 0;
   }
 
-  /* ── Section headers ── */
+  /* ── Section label ── */
   .section-label {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    color: #1e7a3e;
-    border-left: 4px solid #28a85e;
-    padding: 3px 0 3px 12px;
+    color: #58d68d;
+    border-left: 4px solid #2ea04f;
+    padding: 4px 0 4px 14px;
     margin: 32px 0 18px 0;
-    background: #eafaf0;
+    background: #1c2b1c;
     border-radius: 0 6px 6px 0;
   }
 
   /* ── Metric cards ── */
   .metric-grid {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
     margin-bottom: 22px;
   }
   .metric-card {
-    background: #ffffff;
-    border: 1.5px solid #c8e6c8;
-    border-radius: 10px;
-    padding: 16px 22px;
-    min-width: 120px;
-    flex: 1;
-    box-shadow: 0 2px 8px rgba(30,122,62,0.07);
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .metric-card:hover {
+    transform: translateY(-2px);
+    border-color: #2ea04f;
   }
   .metric-card .m-val {
-    font-size: 1.65rem;
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
     font-weight: 700;
-    color: #1e7a3e;
+    color: #58d68d;
     line-height: 1;
   }
   .metric-card .m-lbl {
-    font-size: 0.72rem;
-    color: #6a8f6a;
+    font-size: 0.68rem;
+    color: #8b949e;
     margin-top: 6px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -142,162 +155,229 @@ st.markdown("""
   /* ── Info tiles ── */
   .info-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
   .info-tile {
-    background: #f0faf0;
-    border: 1px solid #c8e6c8;
-    border-radius: 6px;
-    padding: 8px 18px;
-    font-size: 0.84rem;
-    color: #2d4a2d;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    color: #c9d1d9;
   }
-  .info-tile b { color: #1e7a3e; }
+  .info-tile b { color: #58d68d; }
+  .info-tile code { 
+    background: #1c2b1c; 
+    color: #58d68d; 
+    padding: 2px 6px; 
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
 
   /* ── Tags ── */
   .tag {
     display: inline-block;
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 3px 12px;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.5px;
   }
-  .tag-clf  { background: #e6f9ee; color: #1e7a3e; border: 1px solid #28a85e; }
-  .tag-reg  { background: #fff8e1; color: #b8860b; border: 1px solid #f0c040; }
-  .tag-sm   { background: #e3f2fd; color: #1565c0; border: 1px solid #64b5f6; }
-  .tag-med  { background: #fff8e1; color: #b8860b; border: 1px solid #f0c040; }
-  .tag-lg   { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
+  .tag-clf  { background: #1c2b1c; color: #58d68d; border: 1px solid #2ea04f; }
+  .tag-reg  { background: #2b2200; color: #e3b341; border: 1px solid #9e6a03; }
+  .tag-sm   { background: #1a2b40; color: #79c0ff; border: 1px solid #1f6feb; }
+  .tag-med  { background: #2b2200; color: #e3b341; border: 1px solid #9e6a03; }
+  .tag-lg   { background: #3d1a1a; color: #f85149; border: 1px solid #da3633; }
 
   /* ── Allocation block ── */
   .alloc-block {
-    background: #ffffff;
-    border: 1.5px solid #c8e6c8;
-    border-left: 4px solid #28a85e;
-    border-radius: 8px;
-    padding: 18px 22px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-left: 4px solid #2ea04f;
+    border-radius: 10px;
+    padding: 20px 22px;
     font-size: 0.85rem;
-    line-height: 2;
-    color: #2d4a2d;
+    line-height: 2.1;
+    color: #c9d1d9;
     margin-bottom: 16px;
-    box-shadow: 0 2px 8px rgba(30,122,62,0.06);
   }
-  .alloc-block .key { color: #6a8f6a; }
-  .alloc-block .val { color: #1e7a3e; font-weight: 600; }
+  .alloc-block .key { color: #8b949e; }
+  .alloc-block .val { color: #58d68d; font-weight: 600; }
 
   /* ── Best model block ── */
   .best-block {
-    background: linear-gradient(135deg, #e6f9ee, #f0faf0);
-    border: 1.5px solid #28a85e;
-    border-radius: 10px;
-    padding: 20px 24px;
+    background: linear-gradient(135deg, #1c2b1c, #0d220d);
+    border: 1px solid #2ea04f;
+    border-radius: 12px;
+    padding: 22px 26px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 12px rgba(30,122,62,0.12);
+    box-shadow: 0 4px 20px rgba(46,160,79,0.2);
   }
   .best-block .b-name {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 3vw, 1.25rem);
     font-weight: 700;
-    color: #1e7a3e;
+    color: #58d68d;
   }
   .best-block .b-detail {
-    font-size: 0.84rem;
-    color: #3a6b3a;
-    margin-top: 8px;
-    line-height: 1.8;
+    font-size: 0.85rem;
+    color: #c9d1d9;
+    margin-top: 10px;
+    line-height: 1.9;
+  }
+  .best-block .b-detail strong { color: #58d68d; }
+
+  /* ── Speedup banner ── */
+  .speedup-banner {
+    background: linear-gradient(90deg, #1a3a4a, #0f2030);
+    border: 1px solid #1f6feb;
+    border-radius: 10px;
+    padding: 16px 22px;
+    color: #79c0ff;
+    font-size: 0.9rem;
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .speedup-banner .sp-icon { font-size: 1.5rem; }
+  .speedup-banner .sp-val  { font-size: 1.3rem; font-weight: 700; color: #58d68d; }
+  .speedup-banner .sp-lbl  { font-size: 0.78rem; color: #8b949e; display: block; }
+
+  /* ── Viz section ── */
+  .viz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 18px 0;
+  }
+  .viz-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .viz-card-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
   }
 
   /* ── Log window ── */
   .logwin {
-    background: #f8fff8;
-    border: 1px solid #c8e6c8;
-    border-radius: 6px;
-    padding: 12px 16px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 14px 16px;
     font-family: 'Courier New', monospace;
-    font-size: 0.78rem;
-    color: #2d4a2d;
+    font-size: 0.76rem;
+    color: #7ee787;
     max-height: 220px;
     overflow-y: auto;
     white-space: pre-wrap;
-    line-height: 1.6;
+    line-height: 1.7;
   }
 
   /* ── Notice ── */
   .notice {
-    background: #fffde7;
-    border: 1px solid #f9a825;
-    border-radius: 6px;
+    background: #2b2200;
+    border: 1px solid #9e6a03;
+    border-radius: 8px;
     padding: 10px 16px;
     font-size: 0.84rem;
-    color: #7b5800;
+    color: #e3b341;
     margin: 8px 0;
   }
 
   /* ── MLflow block ── */
   .mlflow-block {
-    background: #f0faf0;
-    border: 1px solid #c8e6c8;
-    border-radius: 8px;
-    padding: 16px 20px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px 22px;
     font-size: 0.84rem;
-    color: #2d4a2d;
-    line-height: 1.9;
+    color: #c9d1d9;
+    line-height: 2;
   }
   .mlflow-block code {
-    background: #e6f9ee;
-    color: #1e7a3e;
+    background: #1c2b1c;
+    color: #58d68d;
     padding: 2px 8px;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
   }
 
-  /* ── Predict panel ── */
-  .predict-hero {
-    background: linear-gradient(135deg, #28a85e 0%, #42c97a 100%);
-    border-radius: 12px;
-    padding: 28px 36px 24px 36px;
-    margin-bottom: 24px;
-    color: #ffffff;
-  }
-  .predict-hero h2 {
-    font-size: 1.5rem; font-weight: 700; margin: 0 0 4px 0;
-  }
-  .predict-hero p {
-    margin: 0; opacity: 0.88; font-size: 0.92rem;
-  }
-
-  .predict-box {
-    background: #ffffff;
-    border: 1.5px solid #c8e6c8;
-    border-radius: 10px;
-    padding: 24px 28px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 10px rgba(30,122,62,0.08);
-  }
-
-  .pred-result {
-    background: linear-gradient(135deg, #e6f9ee, #f0faf0);
-    border: 2px solid #28a85e;
-    border-radius: 10px;
-    padding: 20px 28px;
+  /* ── Landing box ── */
+  .landing-box {
+    background: #161b22;
+    border: 2px dashed #30363d;
+    border-radius: 16px;
+    padding: 60px 40px;
     text-align: center;
+    color: #8b949e;
     margin-top: 16px;
   }
-  .pred-result .pred-label { font-size: 0.8rem; color: #6a8f6a; text-transform: uppercase; letter-spacing: 1px; }
-  .pred-result .pred-value { font-size: 2rem; font-weight: 700; color: #1e7a3e; margin-top: 4px; }
-  .pred-result .pred-conf  { font-size: 0.85rem; color: #3a6b3a; margin-top: 6px; }
 
   /* ── Streamlit overrides ── */
-  .stDataFrame       { border: 1.5px solid #c8e6c8 !important; border-radius: 8px; }
+  .stDataFrame { border: 1px solid #30363d !important; border-radius: 8px; }
   .stButton > button {
-    background: #1e7a3e !important;
-    color: white !important;
-    border: none !important;
+    background: #238636 !important;
+    color: #ffffff !important;
+    border: 1px solid #2ea04f !important;
     border-radius: 8px !important;
     font-weight: 600 !important;
-    padding: 0.5rem 1.4rem !important;
-    transition: background 0.2s;
+    padding: 0.5rem 1.5rem !important;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif !important;
   }
-  .stButton > button:hover { background: #28a85e !important; }
+  .stButton > button:hover {
+    background: #2ea04f !important;
+    border-color: #3fb950 !important;
+    box-shadow: 0 0 12px rgba(46,160,79,0.3) !important;
+    transform: translateY(-1px);
+  }
+  .stDownloadButton > button {
+    background: #161b22 !important;
+    color: #58d68d !important;
+    border: 1px solid #2ea04f !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+  }
+  .stTabs [data-baseweb="tab"] {
+    color: #8b949e !important;
+    font-weight: 500;
+  }
+  .stTabs [aria-selected="true"] {
+    color: #58d68d !important;
+    border-bottom: 2px solid #58d68d !important;
+  }
+  .stProgress > div > div { background-color: #2ea04f !important; }
+  .stSlider [data-testid="stThumbValue"] { color: #58d68d !important; }
+  div[data-testid="stExpander"] {
+    background: #161b22 !important;
+    border: 1px solid #30363d !important;
+    border-radius: 8px !important;
+  }
+  div[data-testid="stExpander"] summary {
+    color: #c9d1d9 !important;
+  }
+  .stAlert { border-radius: 8px !important; }
   #MainMenu { visibility: hidden; }
   footer    { visibility: hidden; }
   header    { visibility: hidden; }
+
+  /* ── Mobile responsiveness ── */
+  @media (max-width: 640px) {
+    .hero { padding: 28px 20px 22px 20px; }
+    .metric-grid { grid-template-columns: repeat(2, 1fr); }
+    .info-row { gap: 6px; }
+    .info-tile { font-size: 0.78rem; padding: 6px 12px; }
+    .alloc-block { font-size: 0.8rem; padding: 14px 16px; }
+    .best-block  { padding: 16px 18px; }
+    .speedup-banner { padding: 12px 16px; }
+    .section-label { font-size: 0.65rem; }
+  }
 </style>
 """, unsafe_allow_html=True)
 
@@ -345,10 +425,6 @@ with st.sidebar:
     enable_shap     = st.checkbox("SHAP Explanations",   value=True)
     enable_ensemble = st.checkbox("Stacking Ensemble",   value=True)
     enable_report   = st.checkbox("Generate PDF Report", value=True)
-
-    st.divider()
-    st.markdown("**📈 MLflow**")
-    st.markdown("""Run: `mlflow ui` → `http://localhost:5000`""")
 
     st.divider()
     if st.button("🔄 Reset", use_container_width=True):
@@ -427,7 +503,7 @@ if st.session_state["df"] is not None:
     cplx_tag  = {"small": "sm", "medium": "med", "large": "lg"}[complexity]
     st.markdown(
         f'<div class="info-row">'
-        f'<div class="info-tile"><b>Target:</b> <code style="color:#1e7a3e">{an["target_column"]}</code></div>'
+        f'<div class="info-tile"><b>Target:</b> <code>{an["target_column"]}</code></div>'
         f'<div class="info-tile"><b>Task:</b> <span class="tag tag-{task_tag}">{task_type.upper()}</span></div>'
         f'<div class="info-tile"><b>Complexity:</b> <span class="tag tag-{cplx_tag}">{complexity.upper()}</span></div>'
         f'<div class="info-tile"><b>Memory:</b> {an["memory_mb"]:.2f} MB</div>'
@@ -549,37 +625,62 @@ if st.session_state["df"] is not None:
         results    = res.get("results", [])
         best       = res.get("best", None)
         summary_df = res.get("summary_df", pd.DataFrame())
+        speedup_info = res.get("speedup_info", {})
 
-        st.markdown('<div class="section-label">Step 5 — Results</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label">Step 5 — Results & Visualizations</div>', unsafe_allow_html=True)
 
         if not results:
             st.error("No models trained successfully. Check the logs.")
         else:
+            # ── Parallel Execution Time Banner ────────────────────────────────
+            if speedup_info:
+                wall   = speedup_info.get("wall", 0)
+                seq    = speedup_info.get("sequential_estimate", 0)
+                sp_val = speedup_info.get("speedup", 1)
+                st.markdown(f"""
+                <div class="speedup-banner">
+                  <div class="sp-icon">⚡</div>
+                  <div>
+                    <span class="sp-lbl">Parallel Wall Time</span>
+                    <span class="sp-val">{wall:.1f}s</span>
+                  </div>
+                  <div>
+                    <span class="sp-lbl">Sequential Estimate</span>
+                    <span class="sp-val">{seq:.1f}s</span>
+                  </div>
+                  <div>
+                    <span class="sp-lbl">Parallel Speedup</span>
+                    <span class="sp-val">{sp_val:.2f}×</span>
+                  </div>
+                  <div style="font-size:0.82rem; color:#8b949e;">
+                    Trained {len(results)} models concurrently using ThreadPoolExecutor
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # ── Best Model Card ────────────────────────────────────────────────
             if best:
                 primary = "accuracy" if task_type == "classification" else "r2"
                 plabel  = "Accuracy"  if task_type == "classification" else "R² Score"
                 pval    = best.get("metrics", {}).get(primary, 0)
                 cv_m    = best.get("cv_mean", 0)
                 cv_s    = best.get("cv_std", 0)
-
-                train_t  = best.get("train_time", "N/A")
-                ram_mb   = best.get("peak_ram_mb", 0)
-                workers  = best.get("n_jobs", 1)
+                train_t = best.get("train_time", "N/A")
+                ram_mb  = best.get("peak_ram_mb", 0)
 
                 st.markdown(f"""
                 <div class="best-block">
                   <div class="b-name">🏆 Best Model: {best.get('name','Unknown')}</div>
                   <div class="b-detail">
                     {plabel}: <strong>{pval:.4f}</strong> &nbsp;|&nbsp;
-                    CV: <strong>{cv_m:.4f} ± {cv_s:.4f}</strong><br>
-                    Train time: {train_t} s &nbsp;|&nbsp;
-                    Peak RAM: {ram_mb:.0f} MB &nbsp;|&nbsp;
-                    Workers: {workers}
+                    CV Score: <strong>{cv_m:.4f} ± {cv_s:.4f}</strong><br>
+                    Train time: {train_t}s &nbsp;|&nbsp;
+                    Peak RAM: {ram_mb:.0f} MB
                   </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Download buttons
+                # Download button
                 buf = io.BytesIO()
                 joblib.dump(best["model"], buf)
                 buf.seek(0)
@@ -604,36 +705,301 @@ if st.session_state["df"] is not None:
                                 use_container_width=True,
                             )
 
-            # Summary table
+            # ── Summary Table ──────────────────────────────────────────────────
             st.markdown("**📊 All Model Results**")
             if not summary_df.empty:
-                st.dataframe(summary_df, use_container_width=True)
+                st.dataframe(summary_df.style.format(precision=4), use_container_width=True)
 
-            # Bar charts
+            # ═══════════════════════════════════════════════════════════════════
+            # VISUALIZATIONS
+            # ═══════════════════════════════════════════════════════════════════
+            st.markdown('<div class="section-label">Model Visualizations</div>', unsafe_allow_html=True)
+
             primary = "accuracy" if task_type == "classification" else "r2"
-            if not summary_df.empty and primary in summary_df.columns:
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.markdown("**Metric Comparison**")
-                    st.bar_chart(summary_df.set_index("Model")[[primary]])
-                with c2:
-                    if "CV Mean" in summary_df.columns:
-                        st.markdown("**Cross-Validation Mean**")
-                        st.bar_chart(summary_df.set_index("Model")[["CV Mean"]])
+            plabel  = "Accuracy"  if task_type == "classification" else "R² Score"
 
-            # SHAP plots
-            shap_imgs = [
+            # Dark plot style
+            DARK_BG    = "#0d1117"
+            CARD_BG    = "#161b22"
+            GREEN      = "#2ea04f"
+            GREEN_L    = "#58d68d"
+            BORDER     = "#30363d"
+            TEXT_COLOR = "#c9d1d9"
+            SUBTEXT    = "#8b949e"
+            PALETTE    = ["#2ea04f","#1f6feb","#e3b341","#f85149","#bc8cff","#79c0ff","#58d68d","#ffa657"]
+
+            def _dark_fig(w=7, h=4):
+                fig, ax = plt.subplots(figsize=(w, h), facecolor=DARK_BG)
+                ax.set_facecolor(CARD_BG)
+                for spine in ax.spines.values():
+                    spine.set_edgecolor(BORDER)
+                ax.tick_params(colors=TEXT_COLOR, labelsize=8)
+                ax.xaxis.label.set_color(TEXT_COLOR)
+                ax.yaxis.label.set_color(TEXT_COLOR)
+                ax.title.set_color(GREEN_L)
+                ax.grid(True, color=BORDER, linewidth=0.5, alpha=0.6)
+                return fig, ax
+
+            # Build display data from summary_df
+            if not summary_df.empty and primary in summary_df.columns:
+
+                tab_perf, tab_time, tab_cv, tab_radar, tab_shap = st.tabs([
+                    "📈 Performance", "⏱️ Training Time", "🔄 Cross-Validation", "🕸️ Radar Chart", "🔍 SHAP"
+                ])
+
+                models_list = summary_df["Model"].tolist()
+                colors_list = PALETTE[:len(models_list)]
+
+                # ── Tab 1: Performance Bar Chart ──────────────────────────────
+                with tab_perf:
+                    col_v1, col_v2 = st.columns([1, 1])
+
+                    with col_v1:
+                        fig, ax = _dark_fig(6, 4)
+                        vals = summary_df[primary].tolist()
+                        bars = ax.barh(models_list, vals, color=colors_list, edgecolor=BORDER, height=0.6)
+                        ax.set_xlabel(plabel, color=TEXT_COLOR, fontsize=9)
+                        ax.set_title(f"Model {plabel} Comparison", fontsize=10, color=GREEN_L, fontweight="bold")
+                        ax.set_xlim(0, 1.05)
+                        for bar, val in zip(bars, vals):
+                            ax.text(val + 0.01, bar.get_y() + bar.get_height()/2,
+                                    f"{val:.3f}", va="center", color=GREEN_L, fontsize=8, fontweight="bold")
+                        # Highlight best
+                        best_idx = vals.index(max(vals))
+                        bars[best_idx].set_edgecolor("#58d68d")
+                        bars[best_idx].set_linewidth(2)
+                        fig.tight_layout()
+                        st.pyplot(fig)
+                        plt.close(fig)
+
+                    with col_v2:
+                        # F1 / MAE secondary metric
+                        sec_col = "f1_score" if "f1_score" in summary_df.columns else ("mae" if "mae" in summary_df.columns else None)
+                        if sec_col:
+                            sec_label = "F1 Score" if sec_col == "f1_score" else "MAE"
+                            fig, ax = _dark_fig(6, 4)
+                            vals2 = summary_df[sec_col].tolist()
+                            ax.bar(models_list, vals2, color=colors_list, edgecolor=BORDER, width=0.6)
+                            ax.set_ylabel(sec_label, color=TEXT_COLOR, fontsize=9)
+                            ax.set_title(f"{sec_label} by Model", fontsize=10, color=GREEN_L, fontweight="bold")
+                            ax.set_xticks(range(len(models_list)))
+                            ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
+                            fig.tight_layout()
+                            st.pyplot(fig)
+                            plt.close(fig)
+                        else:
+                            # RMSE fallback
+                            if "rmse" in summary_df.columns:
+                                fig, ax = _dark_fig(6, 4)
+                                vals_rmse = summary_df["rmse"].tolist()
+                                ax.bar(models_list, vals_rmse, color=colors_list, edgecolor=BORDER, width=0.6)
+                                ax.set_ylabel("RMSE", color=TEXT_COLOR, fontsize=9)
+                                ax.set_title("RMSE by Model", fontsize=10, color=GREEN_L, fontweight="bold")
+                                ax.set_xticks(range(len(models_list)))
+                                ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
+                                fig.tight_layout()
+                                st.pyplot(fig)
+                                plt.close(fig)
+
+                # ── Tab 2: Training Time + RAM ────────────────────────────────
+                with tab_time:
+                    col_t1, col_t2 = st.columns([1, 1])
+
+                    with col_t1:
+                        if "Train Time (s)" in summary_df.columns:
+                            fig, ax = _dark_fig(6, 4)
+                            times = summary_df["Train Time (s)"].tolist()
+                            bars = ax.bar(models_list, times, color=colors_list, edgecolor=BORDER, width=0.6)
+                            ax.set_ylabel("Train Time (s)", color=TEXT_COLOR, fontsize=9)
+                            ax.set_title("Training Time per Model", fontsize=10, color=GREEN_L, fontweight="bold")
+                            ax.set_xticks(range(len(models_list)))
+                            ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
+                            for bar, t in zip(bars, times):
+                                ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                                        f"{t:.2f}s", ha="center", va="bottom", color=GREEN_L, fontsize=8)
+                            fig.tight_layout()
+                            st.pyplot(fig)
+                            plt.close(fig)
+
+                    with col_t2:
+                        if "Peak RAM (MB)" in summary_df.columns:
+                            fig, ax = _dark_fig(6, 4)
+                            rams = summary_df["Peak RAM (MB)"].tolist()
+                            ax.barh(models_list, rams, color="#1f6feb", edgecolor=BORDER, height=0.6)
+                            ax.set_xlabel("Peak RAM (MB)", color=TEXT_COLOR, fontsize=9)
+                            ax.set_title("Peak Memory Usage", fontsize=10, color="#79c0ff", fontweight="bold")
+                            ax.tick_params(colors=TEXT_COLOR, labelsize=8)
+                            for spine in ax.spines.values():
+                                spine.set_edgecolor(BORDER)
+                            fig.tight_layout()
+                            st.pyplot(fig)
+                            plt.close(fig)
+
+                    # Parallel vs Sequential time comparison
+                    if speedup_info:
+                        st.markdown("---")
+                        col_sp1, col_sp2, col_sp3 = st.columns(3)
+                        with col_sp1:
+                            wall_t = speedup_info.get("wall", 0)
+                            st.metric("⚡ Parallel Wall Time", f"{wall_t:.1f}s")
+                        with col_sp2:
+                            seq_t = speedup_info.get("sequential_estimate", 0)
+                            st.metric("🐌 Sequential Estimate", f"{seq_t:.1f}s")
+                        with col_sp3:
+                            sp = speedup_info.get("speedup", 1)
+                            st.metric("🚀 Speedup Factor", f"{sp:.2f}×", delta=f"saved {max(0, seq_t - wall_t):.1f}s")
+
+                        # Speedup visual
+                        fig, ax = _dark_fig(8, 3)
+                        categories = ["Sequential\n(estimate)", "Parallel\n(actual)"]
+                        values     = [seq_t, wall_t]
+                        bar_colors = ["#f85149", "#2ea04f"]
+                        bars = ax.bar(categories, values, color=bar_colors, edgecolor=BORDER, width=0.4)
+                        for bar, v in zip(bars, values):
+                            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.2,
+                                    f"{v:.1f}s", ha="center", va="bottom", color=TEXT_COLOR, fontsize=10, fontweight="bold")
+                        ax.set_ylabel("Time (seconds)", color=TEXT_COLOR, fontsize=9)
+                        ax.set_title(f"Parallel Execution Speedup: {sp:.2f}×", fontsize=11, color=GREEN_L, fontweight="bold")
+                        ax.set_facecolor(CARD_BG)
+                        fig.patch.set_facecolor(DARK_BG)
+                        fig.tight_layout()
+                        st.pyplot(fig)
+                        plt.close(fig)
+
+                # ── Tab 3: Cross-Validation ───────────────────────────────────
+                with tab_cv:
+                    if "CV Mean" in summary_df.columns and "CV Std" in summary_df.columns:
+                        fig, ax = _dark_fig(8, 4.5)
+                        cv_means = summary_df["CV Mean"].tolist()
+                        cv_stds  = summary_df["CV Std"].tolist()
+                        x = range(len(models_list))
+                        bars = ax.bar(x, cv_means, color=colors_list, edgecolor=BORDER, width=0.55,
+                                      yerr=cv_stds, capsize=6, error_kw={"ecolor": "#e3b341", "elinewidth": 2})
+                        ax.set_xticks(list(x))
+                        ax.set_xticklabels(models_list, rotation=25, ha="right", fontsize=8, color=TEXT_COLOR)
+                        ax.set_ylabel("CV Score", color=TEXT_COLOR, fontsize=9)
+                        ax.set_title("Cross-Validation Scores (Mean ± Std)", fontsize=11, color=GREEN_L, fontweight="bold")
+                        ax.set_ylim(0, 1.1)
+                        for bar, m, s in zip(bars, cv_means, cv_stds):
+                            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + s + 0.02,
+                                    f"{m:.3f}", ha="center", va="bottom", color=GREEN_L, fontsize=8, fontweight="bold")
+                        fig.tight_layout()
+                        st.pyplot(fig)
+                        plt.close(fig)
+
+                        # Heatmap of all metrics
+                        metric_cols = [c for c in summary_df.columns
+                                       if c not in ["Model", "Workers"] and summary_df[c].dtype != object]
+                        if len(metric_cols) >= 2:
+                            st.markdown("**📋 Metrics Heatmap**")
+                            heat_df = summary_df[["Model"] + metric_cols].set_index("Model")
+                            norm_df = (heat_df - heat_df.min()) / (heat_df.max() - heat_df.min() + 1e-9)
+                            fig2, ax2 = plt.subplots(
+                                figsize=(min(12, 2 + len(metric_cols)*1.5), max(3, len(models_list)*0.7)),
+                                facecolor=DARK_BG
+                            )
+                            ax2.set_facecolor(DARK_BG)
+                            im = ax2.imshow(norm_df.values, cmap="YlGn", aspect="auto", vmin=0, vmax=1)
+                            ax2.set_xticks(range(len(metric_cols)))
+                            ax2.set_xticklabels(metric_cols, rotation=30, ha="right", color=TEXT_COLOR, fontsize=8)
+                            ax2.set_yticks(range(len(models_list)))
+                            ax2.set_yticklabels(models_list, color=TEXT_COLOR, fontsize=8)
+                            for i in range(len(models_list)):
+                                for j in range(len(metric_cols)):
+                                    ax2.text(j, i, f"{heat_df.values[i,j]:.3f}",
+                                             ha="center", va="center", fontsize=7, color="#0d1117", fontweight="bold")
+                            ax2.set_title("Normalized Metrics Heatmap (higher = better)", color=GREEN_L, fontsize=10, fontweight="bold")
+                            cbar = fig2.colorbar(im, ax=ax2)
+                            cbar.ax.tick_params(colors=TEXT_COLOR, labelsize=7)
+                            fig2.tight_layout()
+                            st.pyplot(fig2)
+                            plt.close(fig2)
+
+                # ── Tab 4: Radar Chart ────────────────────────────────────────
+                with tab_radar:
+                    radar_metrics = [c for c in [primary, "CV Mean", "Train Time (s)", "Peak RAM (MB)"]
+                                     if c in summary_df.columns]
+                    if len(radar_metrics) >= 3 and len(models_list) >= 2:
+                        radar_data = summary_df[["Model"] + radar_metrics].copy()
+                        # Normalize each metric 0–1 (invert time/RAM so higher = better)
+                        for col in radar_metrics:
+                            mn, mx = radar_data[col].min(), radar_data[col].max()
+                            if mx > mn:
+                                if col in ["Train Time (s)", "Peak RAM (MB)"]:
+                                    radar_data[col] = 1 - (radar_data[col] - mn) / (mx - mn)
+                                else:
+                                    radar_data[col] = (radar_data[col] - mn) / (mx - mn)
+                            else:
+                                radar_data[col] = 1.0
+
+                        N      = len(radar_metrics)
+                        angles = [n / float(N) * 2 * np.pi for n in range(N)]
+                        angles += angles[:1]
+
+                        fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True), facecolor=DARK_BG)
+                        ax.set_facecolor(CARD_BG)
+                        ax.spines["polar"].set_color(BORDER)
+                        ax.tick_params(colors=TEXT_COLOR, labelsize=9)
+                        ax.set_xticks(angles[:-1])
+                        ax.set_xticklabels(radar_metrics, color=TEXT_COLOR, fontsize=9)
+                        ax.set_yticklabels([])
+                        ax.yaxis.grid(True, color=BORDER, linewidth=0.5)
+                        ax.xaxis.grid(True, color=BORDER, linewidth=0.5)
+
+                        for idx, row in radar_data.iterrows():
+                            vals_r = row[radar_metrics].tolist()
+                            vals_r += vals_r[:1]
+                            color = colors_list[idx % len(colors_list)]
+                            ax.plot(angles, vals_r, linewidth=2, color=color)
+                            ax.fill(angles, vals_r, alpha=0.15, color=color)
+                        ax.set_title("Model Capability Radar", color=GREEN_L, fontsize=12,
+                                     fontweight="bold", pad=20)
+                        handles = [mpatches.Patch(color=colors_list[i], label=m)
+                                   for i, m in enumerate(models_list)]
+                        ax.legend(handles=handles, loc="upper right", bbox_to_anchor=(1.35, 1.15),
+                                  facecolor=CARD_BG, edgecolor=BORDER, fontsize=8,
+                                  labelcolor=TEXT_COLOR)
+                        fig.tight_layout()
+                        st.pyplot(fig)
+                        plt.close(fig)
+                    else:
+                        st.info("Need at least 2 models and 3 metrics for radar chart.")
+
+                # ── Tab 5: SHAP ───────────────────────────────────────────────
+                with tab_shap:
+                    shap_imgs = [
+                        (r["name"], p)
+                        for r in results
+                        for p in r.get("plot_paths", [])
+                        if "shap_" in os.path.basename(p) and os.path.isfile(p)
+                    ]
+                    if shap_imgs:
+                        for i in range(0, len(shap_imgs), 2):
+                            cols = st.columns(min(2, len(shap_imgs) - i))
+                            for j, col in enumerate(cols):
+                                if i + j < len(shap_imgs):
+                                    mdl, path = shap_imgs[i + j]
+                                    with col:
+                                        st.image(path, caption=f"SHAP — {mdl}", use_container_width=True)
+                    else:
+                        st.info("SHAP plots will appear here after training with SHAP enabled.")
+
+            # ── Eval plots from disk ───────────────────────────────────────────
+            eval_plots = [
                 (r["name"], p)
                 for r in results
                 for p in r.get("plot_paths", [])
-                if "shap_" in os.path.basename(p) and os.path.isfile(p)
+                if "shap_" not in os.path.basename(p) and os.path.isfile(p)
             ]
-            if shap_imgs:
-                st.markdown("**🔍 SHAP Feature Importance**")
-                shap_cols = st.columns(min(len(shap_imgs), 2))
-                for idx, (mdl, path) in enumerate(shap_imgs):
-                    with shap_cols[idx % 2]:
-                        st.image(path, caption=f"SHAP — {mdl}", use_container_width=True)
+            if eval_plots:
+                st.markdown('<div class="section-label">Evaluation Plots</div>', unsafe_allow_html=True)
+                for i in range(0, len(eval_plots), 2):
+                    cols = st.columns(min(2, len(eval_plots) - i))
+                    for j, col in enumerate(cols):
+                        if i + j < len(eval_plots):
+                            mdl, path = eval_plots[i + j]
+                            with col:
+                                st.image(path, caption=mdl, use_container_width=True)
 
         # Training log
         if st.session_state["logs"]:
@@ -663,234 +1029,17 @@ if st.session_state["df"] is not None:
         except Exception:
             st.info("MLflow UI available locally — not supported in cloud environment.")
 
-
-        # ── Step 6: Predict ───────────────────────────────────────────────────
-        st.markdown("---")
-        st.markdown("""
-        <div class="predict-hero">
-          <h2>🎯 Make Predictions</h2>
-          <p>Use the trained best model to predict on new data — enter values manually or upload a CSV.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        if best is None:
-            st.warning("No model available. Complete training first.")
-        else:
-            pred_model = best["model"]
-            prep       = res.get("prep", None)
-            le         = res.get("label_enc", None)
-
-            # The exact columns the preprocessor was fit on (order matters!)
-            num_c      = an.get("numerical_cols", [])
-            cat_c      = an.get("categorical_cols", [])
-            feat_cols  = num_c + cat_c   # same order as build_preprocessor()
-
-            # Fallback: load from disk if prep is missing
-            if prep is None:
-                prep_path = os.path.join(ROOT, "models", "preprocessor.pkl")
-                if os.path.isfile(prep_path):
-                    try:
-                        prep = joblib.load(prep_path)
-                    except Exception:
-                        prep = None
-
-            # ── Feature column lists (must be defined before _apply_prep) ────
-            num_c     = an.get("numerical_cols", [])
-            cat_c     = an.get("categorical_cols", [])
-            feat_cols = num_c + cat_c   # exact order as build_preprocessor()
-
-            # ── Model feature-count guard ──────────────────────────────────
-            expected_n = getattr(pred_model, "n_features_in_", None)
-
-            def _apply_prep(raw_df: pd.DataFrame):
-                """
-                1. Select + reorder columns to match training order.
-                2. Fill numeric NaN with 0.
-                3. Run through the ColumnTransformer.
-                Raises ValueError with a human-readable message on any mismatch.
-                """
-                missing_cols = [c for c in feat_cols if c not in raw_df.columns]
-                if missing_cols:
-                    raise ValueError(
-                        f"Input is missing required columns: {missing_cols}.\n"
-                        f"Required columns: {feat_cols}"
-                    )
-                aligned        = raw_df[feat_cols].copy()
-                aligned[num_c] = aligned[num_c].fillna(0)
-
-                if prep is not None:
-                    X = prep.transform(aligned)
-                else:
-                    X = aligned[num_c].values if num_c else aligned.values
-
-                # Validate output shape against what the model was trained on
-                if expected_n is not None and X.shape[1] != expected_n:
-                    raise ValueError(
-                        f"Preprocessor output has {X.shape[1]} features but the "
-                        f"current model expects {expected_n}.\n"
-                        f"This usually means the model was trained on a different dataset. "
-                        f"Please click '🔁 Re-run training' above to retrain on this dataset."
-                    )
-                return X
-
-            tab_manual, tab_csv = st.tabs(["✏️  Manual Input", "📂  Upload CSV"])
-
-            # ── Tab 1: Manual Input ───────────────────────────────────────────
-            with tab_manual:
-                st.markdown('<div class="predict-box">', unsafe_allow_html=True)
-                st.markdown("**Enter feature values below:**")
-
-                if not feat_cols:
-                    st.warning("No feature columns detected. Make sure training completed successfully.")
-                else:
-
-
-                    # Lay out features in 3-column grid
-                    input_vals = {}
-                    cols_per_row = 3
-                    all_feats = feat_cols
-                    rows = [all_feats[i:i+cols_per_row] for i in range(0, len(all_feats), cols_per_row)]
-
-                    for row_feats in rows:
-                        cols = st.columns(len(row_feats))
-                        for col, feat in zip(cols, row_feats):
-                            with col:
-                                if feat in cat_c:
-                                    # Show unique values from the training data as selectbox
-                                    uniq = df[feat].dropna().unique().tolist()[:20]
-                                    input_vals[feat] = st.selectbox(
-                                        feat, options=uniq, key=f"pred_{feat}"
-                                    )
-                                else:
-                                    col_median = float(df[feat].median()) if feat in df.columns else 0.0
-                                    input_vals[feat] = st.number_input(
-                                        feat, value=col_median, key=f"pred_{feat}"
-                                    )
-
-                    st.markdown("</div>", unsafe_allow_html=True)
-
-                    if st.button("🔮 Predict", key="manual_predict", use_container_width=False):
-                        try:
-                            row_df   = pd.DataFrame([input_vals])
-                            X        = _apply_prep(row_df)
-                            raw_pred = pred_model.predict(X)
-
-                            # Decode label
-                            if le is not None:
-                                try:
-                                    pred_label = str(le.inverse_transform(raw_pred.astype(int))[0])
-                                except Exception:
-                                    pred_label = str(raw_pred[0])
-                            else:
-                                pred_label = f"{raw_pred[0]:.4f}"
-
-                            # Confidence
-                            conf_html = ""
-                            if hasattr(pred_model, "predict_proba"):
-                                proba = pred_model.predict_proba(X)[0]
-                                conf  = float(proba.max()) * 100
-                                conf_html = f'<div class="pred-conf">Confidence: <strong>{conf:.1f}%</strong></div>'
-
-                            pred_type = "Predicted Class" if task_type == "classification" else "Predicted Value"
-                            st.markdown(f"""
-                            <div class="pred-result">
-                              <div class="pred-label">{pred_type}</div>
-                              <div class="pred-value">{pred_label}</div>
-                              {conf_html}
-                            </div>
-                            """, unsafe_allow_html=True)
-
-                        except ValueError as e:
-                            st.error(f"Feature mismatch: {e}")
-                        except Exception as e:
-                            st.error(f"Prediction failed: {e}")
-
-            # ── Tab 2: CSV Upload ─────────────────────────────────────────────
-            with tab_csv:
-                st.markdown('<div class="predict-box">', unsafe_allow_html=True)
-                st.markdown(
-                    "Upload a CSV with the **same feature columns** used during training "
-                    f"(no target column needed). Required columns: `{', '.join(feat_cols[:6])}{'...' if len(feat_cols)>6 else ''}`"
-                )
-
-                pred_csv = st.file_uploader(
-                    "Upload prediction CSV", type=["csv"],
-                    key="pred_csv_upload", label_visibility="collapsed",
-                )
-
-                if pred_csv is not None:
-                    try:
-                        pred_df = pd.read_csv(pred_csv)
-
-                        # Drop target if accidentally included
-                        tgt = an["target_column"]
-                        if tgt in pred_df.columns:
-                            pred_df = pred_df.drop(columns=[tgt])
-
-                        st.markdown(f"**Preview** ({len(pred_df)} rows):")
-                        st.dataframe(pred_df.head(5), use_container_width=True)
-
-                        if st.button("🔮 Predict All Rows", key="csv_predict"):
-                            try:
-                                X_all     = _apply_prep(pred_df)
-                                raw_preds = pred_model.predict(X_all)
-
-                                if le is not None:
-                                    try:
-                                        decoded = le.inverse_transform(raw_preds.astype(int))
-                                    except Exception:
-                                        decoded = raw_preds
-                                else:
-                                    decoded = raw_preds
-
-                                out_df = pred_df.copy()
-                                out_df["Prediction"] = decoded
-
-                                # Probabilities
-                                if hasattr(pred_model, "predict_proba"):
-                                    proba_all = pred_model.predict_proba(X_all)
-                                    out_df["Confidence (%)"] = (proba_all.max(axis=1) * 100).round(1)
-
-                                st.success(f"✅ {len(raw_preds)} predictions generated.")
-                                st.dataframe(out_df, use_container_width=True)
-
-                                # Download predictions
-                                csv_out = out_df.to_csv(index=False).encode("utf-8")
-                                st.download_button(
-                                    "⬇️ Download Predictions CSV",
-                                    data=csv_out,
-                                    file_name="predictions.csv",
-                                    mime="text/csv",
-                                    use_container_width=True,
-                                )
-
-                            except ValueError as e:
-                                st.error(f"Feature mismatch: {e}")
-                            except Exception as e:
-                                st.error(f"Batch prediction failed: {e}")
-
-                    except Exception as e:
-                        st.error(f"Could not read file: {e}")
-
-                st.markdown("</div>", unsafe_allow_html=True)
-
 else:
-    # ── Landing state ─────────────────────────────────────────────────────────
+    # ── Landing state ──────────────────────────────────────────────────────────
     st.markdown("""
-    <div style="
-      background: #ffffff;
-      border: 2px dashed #c8e6c8;
-      border-radius: 14px;
-      padding: 48px 40px;
-      text-align: center;
-      color: #6a8f6a;
-    ">
-      <div style="font-size:3rem; margin-bottom:16px;">📂</div>
-      <div style="font-size:1.2rem; font-weight:600; color:#1e7a3e; margin-bottom:8px;">
+    <div class="landing-box">
+      <div style="font-size:3.5rem; margin-bottom:20px;">📂</div>
+      <div style="font-size:1.25rem; font-weight:700; color:#58d68d; margin-bottom:10px;">
         Upload a CSV file to get started
       </div>
-      <div style="font-size:0.9rem;">
-        Supports classification and regression tasks · Auto-detects target column · No code required
+      <div style="font-size:0.9rem; color:#8b949e; max-width:480px; margin:0 auto;">
+        Supports classification and regression tasks &middot;
+        Auto-detects target column &middot; No code required
       </div>
     </div>
     """, unsafe_allow_html=True)
